@@ -11,6 +11,8 @@ import ChallengesPage from "./Pages/ChallengesPage";
 import ChallengeLanding from "./Pages/ChallengeLanding";
 import Header from "./Components/Header";
 import Footer from "./Components/Footer";
+import CookingTips from "./Pages/CookingTips"; 
+import AddTip from "./Pages/AddTip";
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
         <Route path="/landing-page" element={<RecipeManagementLanding />} />
         <Route path="/challenges" element={<ChallengesPage />} />
         <Route path="/challenge-landing" element={<ChallengeLanding />} />
+        <Route path="/cookingTips" element={<CookingTips />} />
+        <Route path="/addtip" element={<AddTip />} />
       </Routes>
       <Footer />
     </Router>
