@@ -122,7 +122,7 @@ const AddTip = () => {
                 onChange={handleChange}
                 className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
               >
-                <option value="Storage">Storage</option>
+                <option value="Storage">Storages</option>
                 <option value="Prep">Prep</option>
                 <option value="Substitutes">Substitutes</option>
               </select>
