@@ -344,7 +344,7 @@ const CookingTips = () => {
           />
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => handleCategoryChange('all')}
+              onClick={() => handleCategoryChange('all')}//handleCategoryChange('all')}
               className={`px-4 py-2 rounded-full ${
                 selectedCategory === 'all'
                   ? 'bg-amber-500 text-white'

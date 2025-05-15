@@ -37,13 +37,13 @@ const AddTip = () => {
       
       if (response && response.data) {
         setSuccess('Tip added successfully!');
-        // Clear form after successful submission
+        // Clear form after successful submission :: 
         setTip({
           title: '',
           description: '',
           category: 'Storage',
         });
-        // Navigate after a short delay to show the success message
+        // Navigate after a short delay to show the success message ::
         setTimeout(() => {
           navigate('/addtip');
         }, 1500);
