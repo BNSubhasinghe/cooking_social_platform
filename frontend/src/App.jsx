@@ -11,8 +11,8 @@ import ChallengesPage from "./Pages/ChallengesPage";
 import ChallengeLanding from "./Pages/ChallengeLanding";
 import Header from "./Components/Header";
 import Footer from "./Components/Footer";
-import CookingTips from "./Pages/CookingTips"; 
-import AddTip from "./Pages/AddTip";
+import CookingTips from "./Pages/CookingTips"; //mayomi
+import AddTip from "./Pages/AddTip";//mayomi
 
 function App() {
   return (

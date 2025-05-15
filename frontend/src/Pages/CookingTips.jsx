@@ -313,7 +313,7 @@ const CookingTips = () => {
         {/* Featured Tips Section */}
         {featuredTips.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">✨ Featured Tips</h2>
+            <h2 className="text-2xl font-semibold mb-4">✨ Featured Tip</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {featuredTips.map((tip) => (
                 <motion.div
