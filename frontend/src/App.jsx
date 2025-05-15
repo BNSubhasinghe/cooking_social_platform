@@ -1,4 +1,4 @@
-// App.jsx
+// src/App.jsx
 import React from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import RecipeList from "./Pages/RecipeList";
@@ -10,9 +10,7 @@ import RecipeManagementLanding from "./Pages/RecipeManagementLanding";
 import ChallengesPage from "./Pages/ChallengesPage";
 import ChallengeLanding from "./Pages/ChallengeLanding";
 import Header from "./Components/Header";
-import Footer from "./Components/Footer";
-import CookingTips from "./Pages/CookingTips"; 
-import AddTip from "./Pages/AddTip";
+import Footer from "./Components/Footer";           // Make sure this file exists!
 
 function App() {
   return (
@@ -27,8 +25,6 @@ function App() {
         <Route path="/landing-page" element={<RecipeManagementLanding />} />
         <Route path="/challenges" element={<ChallengesPage />} />
         <Route path="/challenge-landing" element={<ChallengeLanding />} />
-        <Route path="/cookingTips" element={<CookingTips />} />
-        <Route path="/addtip" element={<AddTip />} />
       </Routes>
       <Footer />
     </Router>

@@ -340,7 +340,7 @@ const RecipeManagementLanding = ({ topRatedRecipes = [] }) => {
                   playsInline 
                   className="w-full h-full object-cover rounded-2xl"
                 >
-                  <source src="/videos/4253147-uhd_4096_2160_25fps.mp4" type="video/mp4" />
+                  <source src="/video/4253147-uhd_4096_2160_25fps.mp4" type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
               </motion.div>
