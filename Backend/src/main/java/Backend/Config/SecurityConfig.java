@@ -55,7 +55,7 @@ public class SecurityConfig {
                         .successHandler(oAuth2AuthenticationSuccessHandler())
                         .permitAll())
                 .logout(t -> t.logoutUrl("/logout")
-                        .logoutSuccessUrl("http://localhost:5175/login")
+                        .logoutSuccessUrl("http://localhost:5173/login")
                         .invalidateHttpSession(true)
                         .clearAuthentication(true)
                         .deleteCookies("JSESSIONID"))
@@ -87,7 +87,7 @@ public class SecurityConfig {
                 String token = userService.generateJwtTokenForOAuthUser(user);
 
                 // redirect to frontend with token
-                response.sendRedirect("http://localhost:5175/oauth-success?token=" + token);
+                response.sendRedirect("http://localhost:5173/oauth-success?token=" + token);
             }
         };
     }
@@ -95,7 +95,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         final CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5175"));
+        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
         configuration.setAllowedMethods(List.of("HEAD", "GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
         configuration.setAllowCredentials(true);
         configuration.setAllowedHeaders(List.of("Authorization", "Cache-Control", "Content-Type"));
