@@ -7,4 +7,5 @@ import java.util.List;
 public interface TipRepository extends MongoRepository<TipModel, String> {
     List<TipModel> findByCategory(String category);
     List<TipModel> findByTitleContainingIgnoreCase(String title);
+    List<TipModel> findByUserId(String userId);
 }
