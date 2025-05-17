@@ -12,6 +12,9 @@ import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,7 +23,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-public class UserService {
+public class UserService implements UserDetailsService {
 
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder bCryptPasswordEncoder;
@@ -330,5 +333,19 @@ public class UserService {
             return (int) Math.ceil(liters / 0.25); // Convert to glasses
         }
         return 8; // Default
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String userId) throws UsernameNotFoundException {
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty()) {
+            throw new UsernameNotFoundException("User not found with id: " + userId);
+        }
+        User user = userOpt.get();
+        return org.springframework.security.core.userdetails.User
+                .withUsername(user.getId())
+                .password(user.getPassword() != null ? user.getPassword() : "")
+                .authorities("USER")
+                .build();
     }
 }

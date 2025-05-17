@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -37,7 +38,7 @@ public class SecurityConfig {
 
     @Autowired
     public SecurityConfig(Key jwtSecretKey, @Lazy UserService userService) {
-        this.jwtAuthenticationFilter = new JWTAuthenticationFilter(jwtSecretKey);
+        this.jwtAuthenticationFilter = new JWTAuthenticationFilter(jwtSecretKey, userService);
         this.userService = userService;
     }
 
@@ -50,6 +51,12 @@ public class SecurityConfig {
                 .authorizeHttpRequests(t -> t.requestMatchers("/api/users/login", "/api/users/register").permitAll()
                         .requestMatchers("/oauth2/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/challenges/**").authenticated()
+                        .requestMatchers("/recipes**").permitAll()
+                        .requestMatchers("/api/recipes**").permitAll()
+                        .requestMatchers("/api/tips/**").permitAll()
+                        .requestMatchers("/api/tips").permitAll()
+                        .requestMatchers("/uploads/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(t -> t.loginPage("/oauth2/authorization/google")
                         .successHandler(oAuth2AuthenticationSuccessHandler())
@@ -105,11 +112,6 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
 
         return source;
-    }
-
-    @Bean
-    public JWTAuthenticationFilter jwtAuthenticationFilter(Key jwtSecretKey) {
-        return new JWTAuthenticationFilter(jwtSecretKey);
     }
 
     @Bean
