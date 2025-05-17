@@ -39,6 +39,11 @@ export const Header = () => {
     { name: 'Nutrition Tracker', path: '/nutrition' },
   ];
 
+  // Show all links if logged in, else hide "Challenges"
+  const filteredNavLinks = user && user.token
+    ? navLinks
+    : navLinks.filter(link => link.name !== 'Challenges');
+
   return (
     <header 
       className={`fixed top-0 w-full z-50 transition-all duration-300 ${
@@ -68,7 +73,7 @@ export const Header = () => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-1 lg:space-x-2">
-            {navLinks.map((link) => (
+            {filteredNavLinks.map((link) => (
               <Link
                 key={link.path}
                 to={link.path}
@@ -137,7 +142,7 @@ export const Header = () => {
               className="md:hidden overflow-hidden"
             >
               <div className="pt-4 pb-3 space-y-1">
-                {navLinks.map((link) => (
+                {filteredNavLinks.map((link) => (
                   <Link
                     key={link.path}
                     to={link.path}

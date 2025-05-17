@@ -49,3 +49,6 @@ export const submitToChallenge = (id, recipeId) =>
 
 export const voteForSubmission = (id, recipeId) => 
   api.post(`/${id}/vote/${recipeId}`);
+
+export const unvoteForSubmission = (id, recipeId) =>
+  api.post(`/${id}/unvote/${recipeId}`);
