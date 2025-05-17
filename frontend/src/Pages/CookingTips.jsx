@@ -291,6 +291,11 @@ const CookingTips = () => {
     setTipComments([res.data, ...tipComments]);
     setTipCommentText('');
     setTipCommentRating(0);
+
+    // Fetch updated tips to refresh rating/review count
+    const updatedTips = showMyTips ? await getMyTips() : await getAllTips();
+    setTips(updatedTips.data);
+    setFilteredTips(updatedTips.data);
   };
 
   const handleTipCommentEdit = async (e, commentId) => {
@@ -322,36 +327,49 @@ const CookingTips = () => {
     const displayRating = currentHover ? currentHover : (userRating ? userRating : Math.round(tip.averageRating));
 
     return (
-      <div className="flex space-x-1 relative">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <div key={star} className="relative">
-            <button
-              onClick={() => handleRate(tip.id, star)}
-              onMouseEnter={() => setHoverRating((prev) => ({ ...prev, [tip.id]: star }))}
-              onMouseLeave={() => setHoverRating((prev) => ({ ...prev, [tip.id]: 0 }))}
-              disabled={ratingLoading === tip.id}
-              className={`text-2xl transition-colors ${
-                ratingLoading === tip.id
-                  ? 'text-gray-300 cursor-not-allowed'
-                  : (displayRating >= star 
-                    ? (userRating === star ? 'text-yellow-500' : 'text-yellow-400')
-                    : 'text-gray-400 hover:text-yellow-500')
-              }`}
-              title={userRating ? `Your rating: ${userRating} stars` : `Rate ${star} star${star > 1 ? 's' : ''}`}
-            >
-              ★
-            </button>
-            {/* Tooltip only for this star and this tip */}
-            {hoverRating[tip.id] === star && (
-              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-10">
-                Rate {star} {star === 1 ? 'star' : 'stars'}
-              </div>
-            )}
-          </div>
-        ))}
-        {userRating && (
-          <span className="text-xs text-gray-500 ml-2">(Your rating)</span>
-        )}
+      <div className="flex flex-col space-y-2">
+        <div className="flex space-x-1 relative">
+          {[1, 2, 3, 4, 5].map((star) => (
+            <div key={star} className="relative">
+              <button
+                onClick={() => handleRate(tip.id, star)}
+                onMouseEnter={() => setHoverRating((prev) => ({ ...prev, [tip.id]: star }))}
+                onMouseLeave={() => setHoverRating((prev) => ({ ...prev, [tip.id]: 0 }))}
+                disabled={ratingLoading === tip.id}
+                className={`text-2xl transition-colors ${
+                  ratingLoading === tip.id
+                    ? 'text-gray-300 cursor-not-allowed'
+                    : (displayRating >= star 
+                      ? (userRating === star ? 'text-yellow-500' : 'text-yellow-400')
+                      : 'text-gray-400 hover:text-yellow-500')
+                }`}
+                title={userRating ? `Your rating: ${userRating} stars` : `Rate ${star} star${star > 1 ? 's' : ''}`}
+              >
+                ★
+              </button>
+              {hoverRating[tip.id] === star && (
+                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded whitespace-nowrap z-10">
+                  Rate {star} {star === 1 ? 'star' : 'stars'}
+                </div>
+              )}
+            </div>
+          ))}
+          {userRating && (
+            <span className="text-xs text-gray-500 ml-2 self-center">(Your rating)</span>
+          )}
+        </div>
+        
+        {/* Rating count display */}
+        <div className="flex items-center text-sm text-gray-500">
+          <span className="flex items-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-yellow-500 mr-1" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+            <span className="font-medium">{Math.round(tip.averageRating)}</span>
+            <span className="mx-1">•</span>
+            <span>{tip.ratingCount} {tip.ratingCount === 1 ? 'rating' : 'ratings'}</span>
+          </span>
+        </div>
       </div>
     );
   };
@@ -371,101 +389,127 @@ const CookingTips = () => {
     <div
       className="min-h-screen bg-gray-900 text-gray-100"
       style={{
-        backgroundImage: `linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.55)), url(${tipBg})`,
+        backgroundImage: `linear-gradient(rgba(0,0,0,0.65),rgba(0,0,0,0.75)), url(${tipBg})`,
+        backgroundSize: 'cover',
         backgroundAttachment: "fixed"
       }}
     >
-      <div className="max-w-6xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-white drop-shadow-lg">🍳 Cooking Tips & Hacks</h1>
-          <div className="flex gap-2">
+      {/* Back to Top Button */}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+        className="fixed bottom-8 right-8 z-50 bg-amber-500 hover:bg-amber-600 text-white w-12 h-12 rounded-full shadow-lg hover:shadow-amber-400/30 transition-all duration-300 flex items-center justify-center"
+        aria-label="Back to top"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+        </svg>
+      </button>
+
+      <div className="max-w-6xl mx-auto pt-28">
+        {/* Modern Header with Glass Effect */}
+        <div className="flex flex-col md:flex-row justify-between items-center mb-12 bg-white/10 backdrop-blur-md rounded-2xl shadow-xl p-8 border border-white/20">
+          <h1 className="text-4xl font-bold text-white drop-shadow-lg mb-6 md:mb-0 flex items-center">
+            <span className="text-5xl mr-3">🍳</span> Cooking Tips & Hacks
+          </h1>
+          <div className="flex flex-wrap gap-3">
             <button
               onClick={() => setShowMyTips(false)}
-              className={`px-4 py-2 rounded-lg font-semibold ${!showMyTips ? 'bg-amber-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              className={`px-6 py-2.5 rounded-lg font-semibold transition-all duration-200 ${!showMyTips 
+                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md shadow-amber-600/30' 
+                : 'bg-gray-200/90 text-gray-800 hover:bg-gray-300/90'}`}
             >
               All Tips
             </button>
             <button
               onClick={() => setShowMyTips(true)}
-              className={`px-4 py-2 rounded-lg font-semibold ${showMyTips ? 'bg-amber-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+              className={`px-6 py-2.5 rounded-lg font-semibold transition-all duration-200 ${showMyTips 
+                ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md shadow-amber-600/30' 
+                : 'bg-gray-200/90 text-gray-800 hover:bg-gray-300/90'}`}
             >
               My Tips
             </button>
             <Link
               to="/addtip"
-              className="bg-amber-500 text-white px-6 py-2 rounded-lg hover:bg-amber-600 transition font-semibold shadow"
+              className="bg-gradient-to-r from-amber-500 to-amber-600 text-white px-6 py-2.5 rounded-lg hover:shadow-lg hover:-translate-y-0.5 transition-all duration-200 font-semibold shadow-md shadow-amber-600/30 flex items-center"
             >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
               Share Your Tip
             </Link>
           </div>
         </div>
 
-        {/* Add extra space between header and Most Rated Tip */}
-        <div className="mb-12"></div>
-
-        {/* Most Rated Tip Card */}
+        {/* Most Rated Tip Card - Minimal Modern Style */}
         {mostRatedTip && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="bg-gradient-to-r from-amber-100 via-yellow-50 to-amber-200 border-l-8 border-amber-500 p-8 mb-10 rounded-2xl shadow-2xl"
+            className="bg-white/90 rounded-xl shadow-lg p-6 mb-12 flex flex-col justify-between"
           >
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h2 className="text-3xl font-bold text-amber-700 mb-2 flex items-center gap-2">
-                  <span role="img" aria-label="star">⭐</span>
-                  Most Rated Tip
-                </h2>
-                <div className="flex flex-col gap-1">
-                  <span className={`inline-block px-3 py-1 text-sm rounded-full ${categoryColors[mostRatedTip.category]}`}>
-                    {mostRatedTip.category}
-                  </span>
-                  <span className="text-gray-700 font-medium">
-                    Posted by <span className="text-blue-700">{mostRatedTip.userDisplayName}</span>
-                  </span>
-                  {mostRatedTip.createdAt && (
-                    <span className="text-gray-500 text-sm">
-                      {format(new Date(mostRatedTip.createdAt), 'PPpp')}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div className="flex flex-col items-end">
-                <span className="text-yellow-600 font-bold text-xl flex items-center gap-1">
-                  ⭐ {Math.round(mostRatedTip.averageRating)}
+            <span className={
+              mostRatedTip.category === 'Prep'
+                ? 'bg-green-100 text-green-700 rounded-full px-4 py-1 text-sm font-semibold shadow-sm mb-2 inline-block'
+                : mostRatedTip.category === 'Storage'
+                ? 'bg-blue-100 text-blue-700 rounded-full px-4 py-1 text-sm font-semibold shadow-sm mb-2 inline-block'
+                : mostRatedTip.category === 'Substitutes'
+                ? 'bg-yellow-100 text-yellow-700 rounded-full px-4 py-1 text-sm font-semibold shadow-sm mb-2 inline-block'
+                : 'bg-gray-100 text-gray-700 rounded-full px-4 py-1 text-sm font-semibold shadow-sm mb-2 inline-block'
+            }>
+              {mostRatedTip.category}
+            </span>
+            <h3 className="text-2xl font-bold mb-2 text-gray-900">{mostRatedTip.title}</h3>
+            <p className="text-gray-700 mb-4 line-clamp-3">{mostRatedTip.description}</p>
+            <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-200">
+              <div className="flex flex-col">
+                <span className="text-xs text-gray-500">
+                  {mostRatedTip.createdAt && format(new Date(mostRatedTip.createdAt), 'PPpp')}
                 </span>
-                <span className="text-gray-500 text-sm">
-                  ({mostRatedTip.ratingCount} ratings)
+                <span className="text-xs text-gray-600">
+                  Posted by <span className="font-semibold text-blue-700">{mostRatedTip.userDisplayName}</span>
                 </span>
               </div>
-            </div>
-            <h3 className="text-2xl font-semibold mb-2">{mostRatedTip.title}</h3>
-            <p className="text-gray-700 mb-4">{mostRatedTip.description}</p>
-            <div className="flex items-center justify-between">
-              {renderStars(mostRatedTip, true)}
-              {mostRatedTip.featured && (
-                <span className="text-amber-500 text-base ml-4">✨ Featured</span>
-              )}
+              <div className="flex items-center gap-4">
+                <span className="flex items-center text-yellow-500 font-semibold">
+                  <svg className="h-5 w-5 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  {Math.round(mostRatedTip.averageRating * 10) / 10}
+                </span>
+                <span className="flex items-center text-gray-500 text-sm">
+                  <svg className="h-5 w-5 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path d="M17 8h2a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V10a2 2 0 012-2h2"></path>
+                    <circle cx="12" cy="5" r="3"></circle>
+                  </svg>
+                  {mostRatedTip.reviewCount || 0}
+                </span>
+              </div>
             </div>
           </motion.div>
         )}
 
-        {/* Featured Tips Section */}
+        {/* Featured Tips Section - Enhanced */}
         {featuredTips.length > 0 && (
-          <div className="mb-8">
-            <h2 className="text-2xl font-semibold mb-4">✨ Featured Tip</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="mb-12">
+            <h2 className="text-2xl font-bold mb-6 text-white flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 mr-2 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+              Featured Tips
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {featuredTips.map((tip) => (
                 <motion.div
                   key={tip.id}
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
-                  className="bg-white p-4 rounded-lg shadow-md border border-amber-200"
+                  whileHover={{ scale: 1.02 }}
+                  className="bg-white/90 backdrop-blur-sm p-6 rounded-xl shadow-xl border border-amber-200 hover:border-amber-300 transition-all duration-300"
                 >
-                  <h3 className="font-semibold mb-2">{tip.title}</h3>
-                  <p className="text-gray-600 mb-2">{tip.description}</p>
-                  <div className={`inline-block px-2 py-1 text-sm rounded-full ${categoryColors[tip.category]}`}>
+                  <h3 className="font-semibold text-xl mb-3 text-gray-800">{tip.title}</h3>
+                  <p className="text-gray-600 mb-4">{tip.description}</p>
+                  <div className={`inline-block px-4 py-1.5 text-sm rounded-full font-medium ${categoryColors[tip.category]}`}>
                     {tip.category}
                   </div>
                 </motion.div>
@@ -474,34 +518,40 @@ const CookingTips = () => {
           </div>
         )}
 
-        {/* Search and Filter Section */}
-        <div className="mb-6 space-y-4">
-          <input
-            type="text"
-            placeholder="Search cooking tips..."
-            value={search}
-            onChange={handleSearch}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow focus:outline-none focus:ring-2 focus:ring-amber-400"
-          />
-          <div className="flex flex-wrap gap-2">
+        {/* Search and Filter Section - Enhanced */}
+        <div className="mb-10 space-y-5">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search cooking tips..."
+              value={search}
+              onChange={handleSearch}
+              className="w-full px-5 py-4 pl-12 border-none rounded-xl shadow-lg focus:outline-none focus:ring-4 focus:ring-amber-400/30 bg-white/90 backdrop-blur-sm text-gray-800 font-medium"
+            />
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-gray-500 absolute left-4 top-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+
+          <div className="flex flex-wrap gap-3">
             <button
-              onClick={() => handleCategoryChange('all')}//handleCategoryChange('all')}
-              className={`px-4 py-2 rounded-full ${
+              onClick={() => handleCategoryChange('all')}
+              className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
                 selectedCategory === 'all'
-                  ? 'bg-amber-500 text-white'
-                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                  ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md shadow-amber-600/30'
+                  : 'bg-white/80 text-gray-700 hover:bg-white/90'
               }`}
             >
-              All
+              All Categories
             </button>
             {['Storage', 'Prep', 'Substitutes'].map((category) => (
               <button
                 key={category}
                 onClick={() => handleCategoryChange(category)}
-                className={`px-4 py-2 rounded-full ${
+                className={`px-6 py-3 rounded-xl font-semibold transition-all duration-200 ${
                   selectedCategory === category
-                    ? 'bg-amber-500 text-white'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-white shadow-md shadow-amber-600/30'
+                    : 'bg-white/80 text-gray-700 hover:bg-white/90'
                 }`}
               >
                 {category}
@@ -510,8 +560,8 @@ const CookingTips = () => {
           </div>
         </div>
 
-        {/* Tips Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Tips Grid - Enhanced */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {filteredTips.length > 0 ? (
             filteredTips.map((tip) => (
               <motion.div
@@ -519,174 +569,158 @@ const CookingTips = () => {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4 }}
-                className="bg-white/80 backdrop-blur-md rounded-xl shadow-lg p-6 mb-6 transition hover:shadow-2xl relative cursor-pointer"
+                whileHover={{ y: -5, scale: 1.02 }}
+                className="bg-white/90 rounded-xl shadow-lg p-6 transition-all duration-300 hover:shadow-2xl hover:bg-white cursor-pointer flex flex-col justify-between relative"
                 onClick={() => setSelectedTip(tip)}
               >
-                {/* Only show edit/delete if tip.userId matches current user or in My Tips */}
+                {/* Edit/Delete icons for own tips */}
                 {(showMyTips || tip.userId === localStorage.getItem('userId')) && (
-                  <div className="absolute top-4 right-4 flex space-x-2">
+                  <div className="absolute top-4 right-4 flex space-x-2 z-10">
                     <button
                       onClick={e => { e.stopPropagation(); handleEdit(tip); }}
-                      className="text-gray-400 hover:text-blue-500 transition-colors"
+                      className="text-gray-400 hover:text-blue-500 bg-white/80 p-2 rounded-full hover:bg-white transition-colors shadow"
                       title="Edit tip"
                     >
-                      {/* ...edit icon... */}
+                      {/* Pencil icon */}
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                         <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                       </svg>
                     </button>
                     <button
-                      onClick={e => { e.stopPropagation(); handleDelete(tip.id); }}
-                      disabled={deleteLoading === tip.id}
-                      className="text-gray-400 hover:text-red-500 transition-colors"
+                      onClick={e => { e.stopPropagation(); if(window.confirm('Are you sure you want to delete this tip?')) handleDelete(tip.id); }}
+                      className="text-gray-400 hover:text-red-500 bg-white/80 p-2 rounded-full hover:bg-white transition-colors shadow"
                       title="Delete tip"
                     >
-                      {/* ...delete icon... */}
-                      {deleteLoading === tip.id ? (
-                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                      ) : (
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-                        </svg>
-                      )}
+                      {/* Trash icon */}
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
                     </button>
                   </div>
                 )}
-                <div className="flex flex-col gap-1 mb-2">
-                  <span className="text-gray-700 font-medium">
-                    Posted by <span className="text-blue-700">{tip.userDisplayName}</span>
-                    {tip.createdAt && (
-                      <span className="text-gray-500 text-sm ml-2">
-                        {format(new Date(tip.createdAt), 'PPpp')}
-                      </span>
-                    )}
-                  </span>
-                </div>
-                <h3 className="text-xl font-semibold mb-3 pr-16">{tip.title}</h3>
-                <p className="text-gray-700 mb-4">{tip.description}</p>
-                {/* Rating and review count */}
-                <div className="flex items-center space-x-2 mt-2">
-                  <span className="text-yellow-600 font-medium">
-                    ⭐ {Math.round(tip.averageRating)}
-                  </span>
-                  <span className="text-gray-500 text-sm">
-                    ({tip.ratingCount} ratings, {tip.reviewCount || 0} reviews)
-                  </span>
-                </div>
-                {/* ...rest of tip card... */}
-                <div className="flex flex-col space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className={`text-sm px-3 py-1 rounded-full ${categoryColors[tip.category]}`}>
-                      {tip.category}
+                <span className={
+                  tip.category === 'Prep'
+                    ? 'bg-green-100 text-green-700 rounded-full px-4 py-1 text-sm font-semibold shadow-sm mb-2 inline-block'
+                    : tip.category === 'Storage'
+                    ? 'bg-blue-100 text-blue-700 rounded-full px-4 py-1 text-sm font-semibold shadow-sm mb-2 inline-block'
+                    : tip.category === 'Substitutes'
+                    ? 'bg-yellow-100 text-yellow-700 rounded-full px-4 py-1 text-sm font-semibold shadow-sm mb-2 inline-block'
+                    : 'bg-gray-100 text-gray-700 rounded-full px-4 py-1 text-sm font-semibold shadow-sm mb-2 inline-block'
+                }>
+                  {tip.category}
+                </span>
+                <h3 className="text-xl font-bold mb-2 text-gray-900">{tip.title}</h3>
+                <p className="text-gray-700 mb-4 line-clamp-3">{tip.description}</p>
+                <div className="flex items-center justify-between mt-auto pt-4 border-t border-gray-200">
+                  <div className="flex flex-col">
+                    <span className="text-xs text-gray-500">
+                      {tip.createdAt && format(new Date(tip.createdAt), 'PPpp')}
+                    </span>
+                    <span className="text-xs text-gray-600">
+                      Posted by <span className="font-semibold text-blue-700">{tip.userDisplayName}</span>
                     </span>
                   </div>
-                  <div className="flex flex-col space-y-2">
-                    <div className="flex justify-between items-center">
-                      {renderStars(tip)}
-                      {tip.featured && (
-                        <span className="text-amber-500 text-sm">✨ Featured</span>
-                      )}
-                    </div>
-                    {ratingLoading === tip.id && (
-                      <div className="text-sm text-gray-500 flex items-center">
-                        <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Updating rating...
-                      </div>
-                    )}
-                    {ratingSuccess === tip.id && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="text-sm text-green-600"
-                      >
-                        Rating updated successfully!
-                      </motion.div>
-                    )}
+                  <div className="flex items-center gap-4">
+                    <span className="flex items-center text-yellow-500 font-semibold">
+                      <svg className="h-5 w-5 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                      {Math.round(tip.averageRating * 10) / 10}
+                    </span>
+                    <span className="flex items-center text-gray-500 text-sm">
+                      <svg className="h-5 w-5 mr-1" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M17 8h2a2 2 0 012 2v10a2 2 0 01-2 2H5a2 2 0 01-2-2V10a2 2 0 012-2h2"></path>
+                        <circle cx="12" cy="5" r="3"></circle>
+                      </svg>
+                      {tip.reviewCount || 0}
+                    </span>
                   </div>
                 </div>
               </motion.div>
             ))
           ) : (
-            <p className="col-span-full text-center text-gray-500 py-8">No tips found.</p>
+            <div className="col-span-full bg-white/40 backdrop-blur-md rounded-xl p-12 text-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p className="text-gray-700 text-xl font-medium">No tips found matching your criteria</p>
+              <p className="text-gray-500 mt-2">Try adjusting your search or filters</p>
+            </div>
           )}
         </div>
       </div>
 
       {/* Edit Modal */}
       {editingTip && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-lg p-6 w-full max-w-lg"
+            className="bg-white/90 backdrop-blur-lg rounded-2xl shadow-2xl w-full max-w-md p-8 relative"
           >
-            <h3 className="text-xl font-semibold mb-4">Edit Tip</h3>
-            <form onSubmit={handleEditSubmit} className="space-y-4">
+            <button
+              onClick={() => setEditingTip(null)}
+              className="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition-colors text-2xl"
+              title="Close"
+            >
+              &times;
+            </button>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Update Your Tip</h2>
+            <form onSubmit={handleEditSubmit} className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Title
-                </label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Title</label>
                 <input
                   type="text"
                   name="title"
                   value={editForm.title}
                   onChange={handleEditChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-400 focus:outline-none bg-white text-gray-900 text-base shadow"
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Description
-                </label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Description</label>
                 <textarea
                   name="description"
                   value={editForm.description}
                   onChange={handleEditChange}
-                  rows="4"
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  rows={4}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-400 focus:outline-none bg-white text-gray-900 text-base shadow resize-none"
                   required
-                ></textarea>
+                />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Category
-                </label>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
                 <select
                   name="category"
                   value={editForm.category}
                   onChange={handleEditChange}
-                  className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-amber-400 focus:outline-none bg-white text-gray-900 text-base shadow"
+                  required
                 >
                   <option value="Storage">Storage</option>
                   <option value="Prep">Prep</option>
                   <option value="Substitutes">Substitutes</option>
                 </select>
               </div>
-              <div className="flex justify-end space-x-3 mt-6">
+              <div className="flex justify-end gap-3 pt-2">
                 <button
                   type="button"
                   onClick={() => setEditingTip(null)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50"
+                  className="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 bg-white hover:bg-gray-100 font-semibold transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={editLoading}
-                  className={`px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 ${
-                    editLoading ? 'opacity-50 cursor-not-allowed' : ''
+                  className={`px-6 py-2 rounded-lg font-bold text-white bg-gradient-to-r from-amber-500 to-amber-600 shadow-lg hover:from-amber-600 hover:to-amber-700 transition ${
+                    editLoading ? 'opacity-60 cursor-not-allowed' : ''
                   }`}
                 >
                   {editLoading ? (
                     <span className="flex items-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <svg className="animate-spin h-5 w-5 mr-2 text-white" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                       </svg>
@@ -817,7 +851,7 @@ const CookingTips = () => {
                   <div className="text-center py-12 text-gray-400">No reviews yet</div>
                 )}
               </div>
-              {/* --- End Tip Review Section --- */}
+              {/* --- End Tip Review Section mayomi --- */}
               <button
                 className="mt-8 w-full px-4 py-2 bg-amber-500 text-gray-900 rounded-lg hover:bg-amber-600 font-bold shadow-lg transition"
                 onClick={() => setSelectedTip(null)}
@@ -833,3 +867,4 @@ const CookingTips = () => {
 };
 
 export default CookingTips;
+

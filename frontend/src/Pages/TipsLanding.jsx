@@ -58,7 +58,7 @@ const TipsLanding = () => {
                   className="flex flex-col sm:flex-row gap-4 justify-center"
                 >
                   <Link 
-                    to="/tips/create" 
+                    to="/addtip" 
                     className="px-8 py-3 bg-blue-500 hover:bg-blue-600 text-white font-bold rounded-lg shadow-lg transition-all transform hover:scale-105"
                   >
                     Share a Tip
@@ -243,7 +243,7 @@ const TipsLanding = () => {
                 Have a cooking trick that saves time? A special technique that elevates your dishes? Share it with our community and help others improve their cooking skills.
               </p>
               <Link 
-                to="/tips/create" 
+                to="/addtip" 
                 className="px-8 py-4 bg-white text-blue-900 hover:bg-gray-100 font-bold rounded-lg shadow-lg transition-all transform hover:scale-105 inline-block"
               >
                 Share Your Tip Today
