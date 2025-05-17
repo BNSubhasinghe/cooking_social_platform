@@ -44,6 +44,7 @@ import ErrorBoundary from "./Pages/ErrorBoundary.jsx";
 import FoodLog from "./Pages/Nutrition/FoodLog.jsx";
 import WaterLog from "./Pages/Nutrition/WaterLog.jsx";
 import DailyProgress from "./Pages/Progress/DailyProgress.jsx";
+import NutritionTrackerLanding from "./Pages/NutritionTrackerLandingPage";
 
 // API utils
 import api from "./utils/api";
@@ -111,6 +112,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/oauth-success" element={<AuthCallback />} />
+            <Route path="/nutrition" element={<NutritionTrackerLanding />} />
 
             <Route
               path="/profile/complete"

@@ -24,7 +24,7 @@ export const Header = () => {
           )}
           <Link to="/landing-page" className="hover:underline hover:text-blue-700 transition">Recipes</Link>
           <Link to="/cookingTips" className="hover:underline hover:text-blue-700 transition">Tips & Tricks</Link>
-          <Link to="/profile/complete" className="hover:underline hover:text-blue-700 transition">Nutrition Tracker</Link>
+          <Link to="/nutrition" className="hover:underline hover:text-blue-700 transition">Nutrition Tracker</Link>
         </nav>
         {user && user.token ? (
           <button
