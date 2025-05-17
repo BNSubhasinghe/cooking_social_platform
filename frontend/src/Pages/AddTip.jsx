@@ -45,7 +45,7 @@ const AddTip = () => {
         });
         // Navigate after a short delay to show the success message ::
         setTimeout(() => {
-          navigate('/addtip');
+          navigate('/cookingtips');
         }, 1500);
       } else {
         throw new Error('Invalid response from server');
