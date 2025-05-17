@@ -11,6 +11,10 @@ import {
   LogOut,
   TrendingUp,
   RefreshCw,
+  Activity,
+  LineChart,
+  Utensils,
+  Droplets,
 } from "lucide-react";
 
 // Dashboard Component
@@ -63,16 +67,19 @@ const Dashboard = () => {
 
   if (!user || !user.id) {
     return (
-      <div className="flex h-screen items-center justify-center bg-gray-50">
-        <div className="text-center p-8 bg-white rounded-lg shadow-md">
+      <div className="flex h-screen items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50">
+        <div className="text-center p-10 bg-white rounded-xl shadow-lg max-w-md w-full">
+          <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-6">
+            <User size={24} className="text-blue-600" />
+          </div>
           <h2 className="text-2xl font-bold text-gray-800 mb-4">
             Access Denied
           </h2>
-          <p className="text-gray-600 mb-6">
+          <p className="text-gray-600 mb-8">
             Please log in to view your nutrition dashboard.
           </p>
           <button
-            className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg hover:from-blue-600 hover:to-indigo-700 transform hover:scale-[1.02] transition-all shadow-md"
             onClick={() => (window.location.href = "/login")}
           >
             Go to Login
@@ -94,75 +101,81 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50">
       {/* Header */}
-      <header className="bg-white shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex justify-between items-center">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold text-gray-900">
-              Nutrition Dashboard
-            </h1>
-            <span className="hidden md:inline-block text-gray-500">|</span>
-            <span className="hidden md:flex items-center text-gray-500">
-              <CalendarDays size={18} className="mr-2" />
-              {formatDateForHeader()}
-            </span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center text-gray-700">
-              <User size={18} className="mr-2" />
-              <span className="font-medium">{user.name}</span>
+      {/* <header className="bg-white shadow-md">
+        <div className="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+            <div className="flex items-center">
+              <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-2 rounded-lg mr-4">
+                <Activity size={24} className="text-white" />
+              </div>
+              <h1 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-600 to-indigo-700">
+                Nutrition Dashboard
+              </h1>
             </div>
-            <button
-              onClick={logout}
-              className="inline-flex items-center text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              <LogOut size={18} className="mr-1" />
-              <span className="hidden sm:inline-block">Logout</span>
-            </button>
+
+            <div className="flex items-center space-x-2 sm:space-x-6">
+              <div className="flex items-center text-gray-600 bg-gray-100 px-3 py-1.5 rounded-full">
+                <CalendarDays size={16} className="mr-2" />
+                <span className="text-sm font-medium">{formatDateForHeader()}</span>
+              </div>
+
+              <div className="flex items-center bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full">
+                <User size={16} className="mr-2" />
+                <span className="font-medium">{user.name}</span>
+              </div>
+
+              <button
+                onClick={logout}
+                className="inline-flex items-center px-3 py-1.5 text-red-600 bg-red-50 rounded-full hover:bg-red-100 transition-colors"
+              >
+                <LogOut size={16} className="mr-1" />
+                <span className="hidden sm:inline-block font-medium">Logout</span>
+              </button>
+            </div>
           </div>
         </div>
-      </header>
+      </header> */}
 
       <main className="max-w-7xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         {/* Date selector and tabs */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
+        <div className="bg-white rounded-xl shadow-md p-6 mb-6 border border-gray-100">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center space-x-2">
-              <label
-                htmlFor="date-select"
-                className="font-medium text-gray-700"
-              >
-                Select Date:
-              </label>
-              <input
-                id="date-select"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
-                className="p-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              />
+            <div className="flex items-center">
+              <div className="relative">
+                <CalendarDays size={18} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500" />
+                <input
+                  id="date-select"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  className="pl-10 pr-3 py-2 border border-gray-200 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
             </div>
 
-            <div className="flex space-x-2">
+            <div className="flex bg-gray-100 p-1 rounded-lg">
               <button
                 onClick={() => setActiveTab("daily")}
-                className={`px-4 py-2 rounded-md ${
+                className={`flex items-center px-5 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
                   activeTab === "daily"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                } transition-colors`}
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
               >
+                <Activity size={16} className="mr-2" />
                 Daily View
               </button>
               <button
                 onClick={() => setActiveTab("weekly")}
-                className={`px-4 py-2 rounded-md ${
+                className={`flex items-center px-5 py-2 rounded-lg font-medium text-sm transition-all duration-200 ${
                   activeTab === "weekly"
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                } transition-colors`}
+                    ? "bg-white text-blue-600 shadow-sm"
+                    : "text-gray-600 hover:text-gray-800"
+                }`}
               >
+                <LineChart size={16} className="mr-2" />
                 Weekly View
               </button>
             </div>
@@ -171,20 +184,20 @@ const Dashboard = () => {
 
         {/* Content area */}
         {loading && (
-          <div className="flex justify-center items-center h-64 bg-white rounded-lg shadow">
+          <div className="flex justify-center items-center h-64 bg-white rounded-xl shadow-md border border-gray-100">
             <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-gray-200 border-t-blue-600 mb-4"></div>
-              <p className="text-gray-500">Loading your nutrition data...</p>
+              <div className="inline-block animate-spin rounded-full h-10 w-10 border-4 border-gray-200 border-t-blue-600 mb-4"></div>
+              <p className="text-gray-500 font-medium">Loading your nutrition data...</p>
             </div>
           </div>
         )}
 
         {error && (
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-red-100 text-red-500 mb-4">
+          <div className="bg-white rounded-xl shadow-md p-8 text-center border border-gray-100">
+            <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-red-100 text-red-500 mb-4">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
+                className="h-7 w-7"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -200,13 +213,13 @@ const Dashboard = () => {
             <h3 className="text-lg font-medium text-gray-900 mb-2">
               Error Loading Data
             </h3>
-            <p className="text-gray-500 mb-4">{error}</p>
+            <p className="text-gray-500 mb-6">{error}</p>
             <button
               onClick={() => {
                 setError("");
                 fetchProgress();
               }}
-              className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+              className="inline-flex items-center px-5 py-2 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               <RefreshCw size={16} className="mr-2" />
               Retry
@@ -217,9 +230,14 @@ const Dashboard = () => {
         {!loading && !error && (
           <div className="space-y-6">
             {/* Progress Overview */}
-            <div className="bg-white rounded-lg shadow">
-              <div className="px-6 py-5 border-b border-gray-200">
-                <h2 className="text-lg font-medium text-gray-900">
+            <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+              <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 flex items-center">
+                {activeTab === "daily" ? (
+                  <Activity size={20} className="mr-2 text-blue-600" />
+                ) : (
+                  <LineChart size={20} className="mr-2 text-indigo-600" />
+                )}
+                <h2 className="text-lg font-bold text-gray-900">
                   {activeTab === "daily"
                     ? "Today's Progress"
                     : "Weekly Overview"}
@@ -238,11 +256,10 @@ const Dashboard = () => {
             {/* Food and Water Tracking Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Food Log */}
-              <div className="bg-white rounded-lg shadow">
-                <div className="px-6 py-5 border-b border-gray-200">
-                  <h2 className="text-lg font-medium text-gray-900">
-                    Food Log
-                  </h2>
+              <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-green-50 to-emerald-50 flex items-center">
+                  <Utensils size={20} className="mr-2 text-green-600" />
+                  <h2 className="text-lg font-bold text-gray-900">Food Log</h2>
                 </div>
                 <div className="p-6">
                   {progress && (
@@ -256,11 +273,10 @@ const Dashboard = () => {
               </div>
 
               {/* Water Log */}
-              <div className="bg-white rounded-lg shadow">
-                <div className="px-6 py-5 border-b border-gray-200">
-                  <h2 className="text-lg font-medium text-gray-900">
-                    Water Intake
-                  </h2>
+              <div className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-cyan-50 flex items-center">
+                  <Droplets size={20} className="mr-2 text-blue-600" />
+                  <h2 className="text-lg font-bold text-gray-900">Water Intake</h2>
                 </div>
                 <div className="p-6">
                   {progress && (
