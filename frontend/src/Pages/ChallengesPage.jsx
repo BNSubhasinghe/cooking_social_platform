@@ -236,51 +236,60 @@ const ChallengesPage = () => {
 
   return (
     <div>
-      <div className="flex min-h-screen bg-gray-50">
-  {/* Sidebar */}
-  <div className="w-64 bg-white shadow-md fixed h-full">
-    <div className="p-4 border-b border-gray-200">
-      <h1 className="text-xl font-bold">Cooking Challenges</h1>
-    </div>
-    <nav className="p-4">
-      <ul className="space-y-2">
-        <li>
+      <div className="min-h-screen bg-gray-50">
+        {/* --- Kristine's Kitchen style icon nav at the top --- */}
+        <div className="w-full bg-white shadow-md py-4 mb-8">
+          <div className="max-w-7xl mx-auto flex flex-wrap justify-center gap-6 items-center">
+            <button
+              onClick={() => {
+                setShowChallengeWall(false);
+                setSelectedChallenge(null);
+              }}
+              className="flex flex-col items-center group focus:outline-none"
+              aria-label="All Challenges"
+            >
+              <img
+                src="https://kristineskitchenblog.com/wp-content/uploads/2023/02/icons-slowcooker.png"
+                alt="Slow Cooker Icon"
+                className={`w-20 h-20 rounded-full shadow group-hover:scale-105 transition ${!showChallengeWall ? 'ring-4 ring-amber-400' : ''}`}
+              />
+              <span className={`mt-2 text-sm font-semibold group-hover:text-amber-600 ${!showChallengeWall ? 'text-amber-600' : 'text-gray-700'}`}>
+                All Challenges
+              </span>
+            </button>
+            <button
+            onClick={() => {
+              setShowChallengeWall(true);
+              setSelectedChallenge(null);
+            }}
+            className="flex flex-col items-center group focus:outline-none"
+            aria-label="Challenge Wall"
+          >
+            <img
+              src="https://kristineskitchenblog.com/wp-content/uploads/2023/02/icons-sides.png"
+              alt="Sides Icon"
+              className={`w-20 h-20 rounded-full shadow group-hover:scale-105 transition ${showChallengeWall ? 'ring-4 ring-amber-400' : ''}`}
+            />
+            <span className={`mt-2 text-sm font-semibold group-hover:text-amber-600 ${showChallengeWall ? 'text-amber-600' : 'text-gray-700'}`}>
+              Challenge Wall
+            </span>
+          </button>
+          </div>
+          <div className="flex justify-center mt-6">
           <button
             onClick={handleCreateChallenge}
-            className="w-full text-left p-3 rounded-lg bg-black text-white font-medium hover:bg-gray-800 transition"
+            className="flex items-center gap-2 px-6 py-3 bg-amber-500 text-black font-bold rounded-full shadow hover:bg-amber-600 hover:scale-105 transition-all duration-200 text-lg"
           >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
             Create Challenge
           </button>
-        </li>
-        <li>
-          <button
-            onClick={() => {
-              setSelectedChallenge(null);
-              fetchChallenges(user.id); // <-- Pass user.id here!
-              setShowChallengeWall(false); 
-            }}
-            className="w-full text-left p-3 rounded-lg hover:bg-gray-100 transition"
-          >
-            All Challenges
-          </button>
-        </li>
-        <li>
-          <button
-            onClick={() => {
-              setShowChallengeWall(true); 
-              setSelectedChallenge(null);
-            }}
-            className="w-full text-left p-3 rounded-lg hover:bg-gray-100 transition"
-          >
-            Challenge Wall
-          </button>
-        </li>
-      </ul>
-    </nav>
-  </div>
+        </div>
+        </div>
 
         {/* Main Content */}
-        <div className="flex-1 ml-64 p-6">
+        <div className="flex-1 p-6">
           {/* Challenge Form */}
           {showForm && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -414,233 +423,242 @@ const ChallengesPage = () => {
           </div>
 
   {showChallengeWall ? (
-  <div className="max-w-7xl mx-auto mt-12">
+  <div className="max-w-7xl mx-auto mt-12 flex flex-col items-center">
     <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">Challenges</h2>
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {allActiveChallenges.length > 0 ? (
-        allActiveChallenges.map((challenge) => (
-          <div
-            key={challenge.id}
-            className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-            onClick={() => handleSelectChallenge(challenge)} 
-          >
-            <div className="relative">
-              {challenge.imageUrl ? (
-                <img
-                  src={`http://localhost:8080${challenge.imageUrl}`}
-                  alt={challenge.title}
-                  className="w-full h-64 object-cover hover:opacity-90 transition-opacity duration-300"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
-                  }}
-                />
-              ) : (
-                <div className="h-64 w-full bg-gradient-to-r from-gray-100 to-gray-300 flex items-center justify-center">
-                  <span className="text-gray-500 text-lg">No Image Available</span>
+    <div className="w-full flex justify-center">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center w-full">
+        {allActiveChallenges.length > 0 ? (
+          allActiveChallenges.map((challenge) => (
+            <div
+              key={challenge.id}
+              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+              style={{ width: 370, minHeight: 420, maxWidth: 400 }}
+              onClick={() => handleSelectChallenge(challenge)} 
+            >
+              <div className="relative">
+                {challenge.imageUrl ? (
+                  <img
+                    src={`http://localhost:8080${challenge.imageUrl}`}
+                    alt={challenge.title}
+                    className="w-full h-64 object-cover hover:opacity-90 transition-opacity duration-300"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+                    }}
+                  />
+                ) : (
+                  <div className="h-64 w-full bg-gradient-to-r from-gray-100 to-gray-300 flex items-center justify-center">
+                    <span className="text-gray-500 text-lg">No Image Available</span>
+                  </div>
+                )}
+                <div className="absolute bottom-3 left-3">
+                  <span className="px-3 py-1 bg-black bg-opacity-70 text-white text-sm rounded-full">
+                    {challenge.theme || "General"}
+                  </span>
                 </div>
-              )}
-              <div className="absolute bottom-3 left-3">
-                <span className="px-3 py-1 bg-black bg-opacity-70 text-white text-sm rounded-full">
-                  {challenge.theme || "General"}
-                </span>
+              </div>
+              <div className="p-5">
+                <h3 className="text-xl font-bold text-gray-800 line-clamp-2">{challenge.title}</h3>
+                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                  {challenge.description || "No description available."}
+                </p>
               </div>
             </div>
-            <div className="p-5">
-              <h3 className="text-xl font-bold text-gray-800 line-clamp-2">{challenge.title}</h3>
-              <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                {challenge.description || "No description available."}
-              </p>
-            </div>
+          ))
+        ) : (
+          <div className="col-span-3 text-center py-12">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 className="text-xl font-medium text-gray-600 mt-4">No active challenges found</h3>
           </div>
-        ))
-      ) : (
-        <div className="col-span-3 text-center py-12">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 className="text-xl font-medium text-gray-600 mt-4">No active challenges found</h3>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   </div>
 ) : (
   
   <>
   {/* Active Challenges */}
-  <div className="max-w-7xl mx-auto">
+  <div className="max-w-7xl mx-auto flex flex-col items-center">
     <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">Active Challenges</h2>
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {filteredChallenges.length > 0 ? (
-        filteredChallenges.map((challenge) => (
-          <div
-            key={challenge.id}
-            className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-            onClick={() => handleSelectChallenge(challenge)} 
-          >
-            <div className="relative">
-              {challenge.imageUrl ? (
-                <img
-                  src={`http://localhost:8080${challenge.imageUrl}`}
-                  alt={challenge.title}
-                  className="w-full h-64 object-cover hover:opacity-90 transition-opacity duration-300"
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
-                  }}
-                />
-              ) : (
-                <div className="h-64 w-full bg-gradient-to-r from-gray-100 to-gray-300 flex items-center justify-center">
-                  <span className="text-gray-500 text-lg">No Image Available</span>
+    <div className="w-full flex justify-center">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center w-full">
+        {filteredChallenges.length > 0 ? (
+          filteredChallenges.map((challenge) => (
+            <div
+              key={challenge.id}
+              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+              style={{ width: 370, minHeight: 420, maxWidth: 400 }}
+              onClick={() => handleSelectChallenge(challenge)} 
+            >
+              <div className="relative">
+                {challenge.imageUrl ? (
+                  <img
+                    src={`http://localhost:8080${challenge.imageUrl}`}
+                    alt={challenge.title}
+                    className="w-full h-64 object-cover hover:opacity-90 transition-opacity duration-300"
+                    onError={(e) => {
+                      e.target.onerror = null;
+                      e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+                    }}
+                  />
+                ) : (
+                  <div className="h-64 w-full bg-gradient-to-r from-gray-100 to-gray-300 flex items-center justify-center">
+                    <span className="text-gray-500 text-lg">No Image Available</span>
+                  </div>
+                )}
+                <div className="absolute top-3 right-3">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); 
+                      handleEdit(challenge);
+                    }}
+                    className="text-2xl p-2 rounded-full bg-white bg-opacity-80 backdrop-blur-sm shadow-md text-gray-600 hover:text-black transition-all duration-300"
+                    aria-label="Edit challenge"
+                  >
+                    ✏️
+                  </button>
                 </div>
-              )}
-              <div className="absolute top-3 right-3">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation(); 
-                    handleEdit(challenge);
-                  }}
-                  className="text-2xl p-2 rounded-full bg-white bg-opacity-80 backdrop-blur-sm shadow-md text-gray-600 hover:text-black transition-all duration-300"
-                  aria-label="Edit challenge"
-                >
-                  ✏️
-                </button>
-              </div>
-              <div className="absolute bottom-3 left-3">
-                <span className="px-3 py-1 bg-black bg-opacity-70 text-white text-sm rounded-full">
-                  {challenge.theme || "General"}
-                </span>
-              </div>
-            </div>
-
-            <div className="p-5">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="text-xl font-bold text-gray-800 line-clamp-2">{challenge.title}</h3>
-                <div className="flex items-center bg-blue-100 px-2 py-1 rounded-full">
-                  <span className="text-blue-500 font-bold text-xs">
-                    {new Date(challenge.startDate).toLocaleDateString()} - {new Date(challenge.endDate).toLocaleDateString()}
+                <div className="absolute bottom-3 left-3">
+                  <span className="px-3 py-1 bg-black bg-opacity-70 text-white text-sm rounded-full">
+                    {challenge.theme || "General"}
                   </span>
                 </div>
               </div>
-              
-              <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                {challenge.description || "No description available."}
-              </p>
-              
-              <div className="flex gap-2">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation(); 
-                    handleSelectChallenge(challenge); 
-                  }}
-                  className="flex-1 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
-                >
-                  View Details
-                </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation(); 
-                    handleDelete(challenge.id);
-                  }}
-                  className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg font-medium hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg"
-                >
-                  Delete
-                </button>
+
+              <div className="p-5">
+                <div className="flex justify-between items-start mb-2">
+                  <h3 className="text-xl font-bold text-gray-800 line-clamp-2">{challenge.title}</h3>
+                  <div className="flex items-center bg-blue-100 px-2 py-1 rounded-full">
+                    <span className="text-blue-500 font-bold text-xs">
+                      {new Date(challenge.startDate).toLocaleDateString()} - {new Date(challenge.endDate).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+                
+                <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                  {challenge.description || "No description available."}
+                </p>
+                
+                <div className="flex gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); 
+                      handleSelectChallenge(challenge); 
+                    }}
+                    className="flex-1 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                  >
+                    View Details
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); 
+                      handleDelete(challenge.id);
+                    }}
+                    className="px-4 py-2 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg font-medium hover:from-red-600 hover:to-red-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
+          ))
+        ) : (
+          <div className="col-span-3 text-center py-12">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <h3 className="text-xl font-medium text-gray-600 mt-4">No challenges match your search</h3>
           </div>
-        ))
-      ) : (
-        <div className="col-span-3 text-center py-12">
-          <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-          <h3 className="text-xl font-medium text-gray-600 mt-4">No challenges match your search</h3>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   </div>
 
           {/* Past Challenges */}
-          <div className="max-w-7xl mx-auto mt-12">
+          <div className="max-w-7xl mx-auto mt-12 flex flex-col items-center">
             <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">Past Challenges</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {pastChallenges.length > 0 ? (
-                pastChallenges.map(challenge => (
-                  <div
-                    key={challenge.id}
-                    className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
-                    onClick={() => handleSelectChallenge(challenge)} 
-                  >
-                    <div className="relative">
-                      {challenge.imageUrl ? (
-                        <img
-                          src={`http://localhost:8080${challenge.imageUrl}`}
-                          alt={challenge.title}
-                          className="w-full h-64 object-cover hover:opacity-90 transition-opacity duration-300"
-                          onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
-                          }}
-                        />
-                      ) : (
-                        <div className="h-64 w-full bg-gradient-to-r from-gray-100 to-gray-300 flex items-center justify-center">
-                          <span className="text-gray-500 text-lg">No Image Available</span>
+            <div className="w-full flex justify-center">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center w-full">
+                {pastChallenges.length > 0 ? (
+                  pastChallenges.map(challenge => (
+                    <div
+                      key={challenge.id}
+                      className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                      style={{ width: 370, minHeight: 420, maxWidth: 400 }}
+                      onClick={() => handleSelectChallenge(challenge)} 
+                    >
+                      <div className="relative">
+                        {challenge.imageUrl ? (
+                          <img
+                            src={`http://localhost:8080${challenge.imageUrl}`}
+                            alt={challenge.title}
+                            className="w-full h-64 object-cover hover:opacity-90 transition-opacity duration-300"
+                            onError={(e) => {
+                              e.target.onerror = null;
+                              e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+                            }}
+                          />
+                        ) : (
+                          <div className="h-64 w-full bg-gradient-to-r from-gray-100 to-gray-300 flex items-center justify-center">
+                            <span className="text-gray-500 text-lg">No Image Available</span>
+                          </div>
+                        )}
+                        <div className="absolute top-2 right-2">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation(); 
+                              handleDelete(challenge.id);
+                            }}
+                            className="text-lg p-1 rounded-full bg-white bg-opacity-80 backdrop-blur-sm shadow-md text-gray-600 hover:text-red-600 transition-all duration-300"
+                            aria-label="Delete challenge"
+                          >
+                            ✕
+                          </button>
                         </div>
-                      )}
-                      <div className="absolute top-2 right-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation(); 
-                            handleDelete(challenge.id);
-                          }}
-                          className="text-lg p-1 rounded-full bg-white bg-opacity-80 backdrop-blur-sm shadow-md text-gray-600 hover:text-red-600 transition-all duration-300"
-                          aria-label="Delete challenge"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                      <div className="absolute bottom-3 left-3">
-                        <span className="px-3 py-1 bg-black bg-opacity-70 text-white text-sm rounded-full">
-                          {challenge.theme || "General"}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="p-5">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-xl font-bold text-gray-800 line-clamp-2">{challenge.title}</h3>
-                        <div className="flex items-center bg-gray-100 px-2 py-1 rounded-full">
-                          <span className="text-gray-500 font-bold text-xs">
-                            Ended on {new Date(challenge.endDate).toLocaleDateString()}
+                        <div className="absolute bottom-3 left-3">
+                          <span className="px-3 py-1 bg-black bg-opacity-70 text-white text-sm rounded-full">
+                            {challenge.theme || "General"}
                           </span>
                         </div>
                       </div>
-                      
-                      <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                        {challenge.description || "No description available."}
-                      </p>
-                      
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleSelectChallenge(challenge);
-                        }}
-                        className="w-full py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg font-medium hover:from-gray-600 hover:to-gray-700 transition-all duration-300 shadow-md hover:shadow-lg"
-                      >
-                        View Results
-                      </button>
+
+                      <div className="p-5">
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="text-xl font-bold text-gray-800 line-clamp-2">{challenge.title}</h3>
+                          <div className="flex items-center bg-gray-100 px-2 py-1 rounded-full">
+                            <span className="text-gray-500 font-bold text-xs">
+                              Ended on {new Date(challenge.endDate).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                          {challenge.description || "No description available."}
+                        </p>
+                        
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectChallenge(challenge);
+                          }}
+                          className="w-full py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg font-medium hover:from-gray-600 hover:to-gray-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                        >
+                          View Results
+                        </button>
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="col-span-3 text-center py-12">
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h3 className="text-xl font-medium text-gray-600 mt-4">No past challenges found</h3>
                   </div>
-                ))
-              ) : (
-                <div className="col-span-3 text-center py-12">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 mx-auto text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <h3 className="text-xl font-medium text-gray-600 mt-4">No past challenges found</h3>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
           </>
@@ -763,7 +781,7 @@ const ChallengesPage = () => {
           {toast && (
             <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 0 001.414 0l4-4z" clipRule="evenodd" />
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
               {toast}
             </div>
