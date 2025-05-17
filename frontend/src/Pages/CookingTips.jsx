@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getAllTips, getTipOfTheDay, searchTips, getFeaturedTips, getTipsByCategory, rateTip, deleteTip, updateTip, getUserRating } from '../api/cookingTipsApi';
+import { getAllTips, getTipOfTheDay, searchTips, getFeaturedTips, getTipsByCategory, rateTip, deleteTip, updateTip, getUserRating, getMyTips } from '../api/cookingTipsApi';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import tipBg from '../assets/Tip.jpg';
@@ -24,6 +24,7 @@ const CookingTips = () => {
   const [ratingSuccess, setRatingSuccess] = useState(null);
   const [hoverRating, setHoverRating] = useState({});
   const [userRatings, setUserRatings] = useState({});
+  const [showMyTips, setShowMyTips] = useState(false); // Add toggle for my tips
 
   const tempUserId = localStorage.getItem('tempUserId') || 
     Math.random().toString(36).substring(7);
@@ -32,10 +33,13 @@ const CookingTips = () => {
     async function fetchData() {
       try {
         setLoading(true);
-        const [tipsRes, featuredRes] = await Promise.all([
-          getAllTips(),
-          getFeaturedTips(),
-        ]);
+        let tipsRes;
+        if (showMyTips) {
+          tipsRes = await getMyTips();
+        } else {
+          tipsRes = await getAllTips();
+        }
+        const featuredRes = await getFeaturedTips();
         setTips(tipsRes.data);
         setFilteredTips(tipsRes.data);
         setFeaturedTips(featuredRes.data);
@@ -63,7 +67,7 @@ const CookingTips = () => {
       }
     }
     fetchData();
-  }, []);
+  }, [showMyTips]); // re-fetch when toggling between all/my tips
 
   useEffect(() => {
     // Save temporary user ID
@@ -108,8 +112,17 @@ const CookingTips = () => {
       setFilteredTips(tips);
     } else {
       try {
-        const res = await searchTips(query);
-        setFilteredTips(res.data);
+        let res;
+        if (showMyTips) {
+          // Filter my tips locally
+          const filtered = tips.filter(tip =>
+            tip.title.toLowerCase().includes(query.toLowerCase())
+          );
+          setFilteredTips(filtered);
+        } else {
+          res = await searchTips(query);
+          setFilteredTips(res.data);
+        }
       } catch (err) {
         console.error('Search failed:', err);
       }
@@ -122,8 +135,14 @@ const CookingTips = () => {
       setFilteredTips(tips);
     } else {
       try {
-        const res = await getTipsByCategory(category);
-        setFilteredTips(res.data);
+        if (showMyTips) {
+          // Filter my tips locally
+          const filtered = tips.filter(tip => tip.category === category);
+          setFilteredTips(filtered);
+        } else {
+          const res = await getTipsByCategory(category);
+          setFilteredTips(res.data);
+        }
       } catch (err) {
         console.error('Category filter failed:', err);
       }
@@ -162,9 +181,9 @@ const CookingTips = () => {
     if (window.confirm('Are you sure you want to delete this tip?')) {
       try {
         setDeleteLoading(id);
-        await deleteTip(id);
+        await deleteTip(id); // Auth handled in API
         // Refresh tips after deletion
-        const updatedTips = await getAllTips();
+        const updatedTips = showMyTips ? await getMyTips() : await getAllTips();
         setTips(updatedTips.data);
         setFilteredTips(updatedTips.data);
       } catch (err) {
@@ -198,9 +217,9 @@ const CookingTips = () => {
 
     try {
       setEditLoading(true);
-      await updateTip(editingTip.id, editForm);
+      await updateTip(editingTip.id, editForm); // Auth handled in API
       // Refresh tips after update
-      const updatedTips = await getAllTips();
+      const updatedTips = showMyTips ? await getMyTips() : await getAllTips();
       setTips(updatedTips.data);
       setFilteredTips(updatedTips.data);
       setEditingTip(null);
@@ -277,12 +296,26 @@ const CookingTips = () => {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold text-white drop-shadow-lg">🍳 Cooking Tips & Hacks</h1>
-          <Link
-            to="/addtip"
-            className="bg-amber-500 text-white px-6 py-2 rounded-lg hover:bg-amber-600 transition font-semibold shadow"
-          >
-            Share Your Tip
-          </Link>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowMyTips(false)}
+              className={`px-4 py-2 rounded-lg font-semibold ${!showMyTips ? 'bg-amber-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            >
+              All Tips
+            </button>
+            <button
+              onClick={() => setShowMyTips(true)}
+              className={`px-4 py-2 rounded-lg font-semibold ${showMyTips ? 'bg-amber-500 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}`}
+            >
+              My Tips
+            </button>
+            <Link
+              to="/addtip"
+              className="bg-amber-500 text-white px-6 py-2 rounded-lg hover:bg-amber-600 transition font-semibold shadow"
+            >
+              Share Your Tip
+            </Link>
+          </div>
         </div>
 
         {/* Tip of the Day */}
@@ -380,37 +413,43 @@ const CookingTips = () => {
                 transition={{ duration: 0.4 }}
                 className="bg-white/80 backdrop-blur-md rounded-xl shadow-lg p-6 mb-6 transition hover:shadow-2xl relative"
               >
-                <div className="absolute top-4 right-4 flex space-x-2">
-                  <button
-                    onClick={() => handleEdit(tip)}
-                    className="text-gray-400 hover:text-blue-500 transition-colors"
-                    title="Edit tip"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => handleDelete(tip.id)}
-                    disabled={deleteLoading === tip.id}
-                    className="text-gray-400 hover:text-red-500 transition-colors"
-                    title="Delete tip"
-                  >
-                    {deleteLoading === tip.id ? (
-                      <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                    ) : (
+                {/* Only show edit/delete if tip.userId matches current user or in My Tips */}
+                {(showMyTips || tip.userId === localStorage.getItem('userId')) && (
+                  <div className="absolute top-4 right-4 flex space-x-2">
+                    <button
+                      onClick={() => handleEdit(tip)}
+                      className="text-gray-400 hover:text-blue-500 transition-colors"
+                      title="Edit tip"
+                    >
+                      {/* ...edit icon... */}
                       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                        <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
                       </svg>
-                    )}
-                  </button>
-                </div>
-
+                    </button>
+                    <button
+                      onClick={() => handleDelete(tip.id)}
+                      disabled={deleteLoading === tip.id}
+                      className="text-gray-400 hover:text-red-500 transition-colors"
+                      title="Delete tip"
+                    >
+                      {/* ...delete icon... */}
+                      {deleteLoading === tip.id ? (
+                        <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : (
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                )}
+                {/* ...rest of tip card... */}
                 <h3 className="text-xl font-semibold mb-3 pr-16">{tip.title}</h3>
                 <p className="text-gray-700 mb-4">{tip.description}</p>
+                {/* ...existing code... */}
                 <div className="flex flex-col space-y-3">
                   <div className="flex justify-between items-center">
                     <span className={`text-sm px-3 py-1 rounded-full ${categoryColors[tip.category]}`}>
