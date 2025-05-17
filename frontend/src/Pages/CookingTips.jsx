@@ -369,7 +369,7 @@ const CookingTips = () => {
 
   return (
     <div
-      className="min-h-screen bg-gray-900 bg-cover bg-center py-10 px-6"
+      className="min-h-screen bg-gray-900 text-gray-100"
       style={{
         backgroundImage: `linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.55)), url(${tipBg})`,
         backgroundAttachment: "fixed"
@@ -399,6 +399,9 @@ const CookingTips = () => {
             </Link>
           </div>
         </div>
+
+        {/* Add extra space between header and Most Rated Tip */}
+        <div className="mb-12"></div>
 
         {/* Most Rated Tip Card */}
         {mostRatedTip && (
@@ -701,117 +704,127 @@ const CookingTips = () => {
 
       {/* Tip Details Modal */}
       {selectedTip && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center p-4 z-50">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-lg p-6 w-full max-w-3xl max-h-[90vh] overflow-y-auto"
-            onClick={e => e.stopPropagation()}
+            className="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto border-4 border-amber-400"
             style={{ width: '700px' }}
           >
-            <h3 className="text-2xl font-bold mb-2">{selectedTip.title}</h3>
-            <div className="mb-2 text-gray-700">{selectedTip.description}</div>
-            <div className={`inline-block px-3 py-1 text-sm rounded-full ${categoryColors[selectedTip.category]}`}>
-              {selectedTip.category}
-            </div>
-            <div className="mt-4 flex justify-between items-center">
-              <span className="text-blue-700 font-medium">By {selectedTip.userDisplayName}</span>
-              <span className="text-gray-500 text-sm">{selectedTip.createdAt && format(new Date(selectedTip.createdAt), 'PPpp')}</span>
-            </div>
-
-            {/* --- Tip Review Section --- */}
-            <div className="mt-8 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">Community Reviews</h2>
-              <form onSubmit={handleTipCommentSubmit} className="mb-8">
-                <input
-                  type="text"
-                  value={tipCommentUserName}
-                  onChange={e => setTipCommentUserName(e.target.value)}
-                  placeholder="Display Name"
-                  className="w-full border border-gray-300 rounded-lg p-2 mb-2"
-                  required
-                />
-                <textarea
-                  value={tipCommentText}
-                  onChange={e => setTipCommentText(e.target.value)}
-                  placeholder="Share your thoughts about this tip..."
-                  className="w-full border border-gray-300 rounded-lg p-3 mb-2"
-                  rows="3"
-                  required
-                />
-                <div className="flex items-center mb-2">
-                  {[1,2,3,4,5].map(star => (
-                    <button
-                      key={star}
-                      type="button"
-                      onClick={() => setTipCommentRating(star)}
-                      onMouseEnter={() => setTipCommentHover(star)}
-                      onMouseLeave={() => setTipCommentHover(0)}
-                      className="focus:outline-none"
-                    >
-                      <span className={`text-2xl ${(tipCommentHover || tipCommentRating) >= star ? 'text-yellow-400' : 'text-gray-300'}`}>★</span>
-                    </button>
-                  ))}
-                  <span className="ml-2 text-sm text-gray-500">{tipCommentRating > 0 ? `${tipCommentRating} star${tipCommentRating !== 1 ? 's' : ''}` : 'Select rating'}</span>
+            {/* Header with background image and overlay */}
+            <div className="relative h-48 rounded-t-2xl overflow-hidden">
+              <img
+                src={tipBg}
+                alt="Tip background"
+                className="w-full h-full object-cover opacity-60"
+              />
+              <div className="absolute inset-0 bg-black bg-opacity-60 flex flex-col justify-center items-center">
+                <h3 className="text-3xl font-bold text-amber-400 mb-2 drop-shadow-lg">{selectedTip.title}</h3>
+                <div className={`inline-block px-3 py-1 text-sm rounded-full bg-amber-500 text-gray-900 font-semibold shadow`}>
+                  {selectedTip.category}
                 </div>
-                <button
-                  type="submit"
-                  disabled={!tipCommentText.trim() || !tipCommentUserName.trim() || tipCommentRating === 0}
-                  className="px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white"
-                >
-                  Submit Review
-                </button>
-              </form>
-              {tipComments.length > 0 ? (
-                <div className="space-y-6">
-                  {tipComments.map(comment => (
-                    <div key={comment.id} className="border-b border-gray-200 pb-6 last:border-0 last:pb-0">
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="font-semibold text-gray-900">{comment.userName}</h3>
-                        <span className="text-sm text-gray-500">{new Date(comment.time).toLocaleString()}</span>
-                      </div>
-                      <div className="flex mb-2">
-                        {[1,2,3,4,5].map(star => (
-                          <span key={star} className={`text-xl ${(comment.rating || 0) >= star ? 'text-yellow-400' : 'text-gray-300'}`}>★</span>
-                        ))}
-                      </div>
-                      {editingTipCommentId === comment.id ? (
-                        <form onSubmit={e => handleTipCommentEdit(e, comment.id)}>
-                          <textarea
-                            value={editTipCommentText}
-                            onChange={e => setEditTipCommentText(e.target.value)}
-                            className="w-full border border-gray-300 rounded-lg p-2 mb-2"
-                            rows="2"
-                          />
-                          <button type="submit" className="mr-2 px-3 py-1 bg-blue-600 text-white rounded">Update</button>
-                          <button type="button" onClick={() => setEditingTipCommentId(null)} className="px-3 py-1">Cancel</button>
-                        </form>
-                      ) : (
-                        <>
-                          <p className="text-gray-700 mb-2">{comment.text}</p>
-                          {comment.userId === currentUserId && (
-                            <div className="flex space-x-2">
-                              <button onClick={() => { setEditingTipCommentId(comment.id); setEditTipCommentText(comment.text); setTipCommentRating(comment.rating); }} className="text-blue-600">Edit</button>
-                              <button onClick={() => handleTipCommentDelete(comment.id)} className="text-red-600">Delete</button>
-                            </div>
-                          )}
-                        </>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 text-gray-400">No reviews yet</div>
-              )}
+              </div>
             </div>
-            {/* --- End Tip Review Section --- */}
-
-            <button
-              className="mt-6 px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600"
-              onClick={() => setSelectedTip(null)}
-            >
-              Close
-            </button>
+            {/* Main content */}
+            <div className="p-8">
+              <div className="mb-2 text-gray-200 text-lg">{selectedTip.description}</div>
+              <div className="flex justify-between items-center mb-6">
+                <span className="text-blue-300 font-medium">By {selectedTip.userDisplayName}</span>
+                <span className="text-gray-400 text-sm">{selectedTip.createdAt && format(new Date(selectedTip.createdAt), 'PPpp')}</span>
+              </div>
+              {/* --- Tip Review Section --- */}
+              <div className="mt-8 bg-gray-800 bg-opacity-80 p-6 rounded-xl shadow border border-amber-400">
+                <h2 className="text-2xl font-bold text-amber-400 mb-4 text-center">Community Reviews</h2>
+                <form onSubmit={handleTipCommentSubmit} className="mb-8">
+                  <input
+                    type="text"
+                    value={tipCommentUserName}
+                    onChange={e => setTipCommentUserName(e.target.value)}
+                    placeholder="Display Name"
+                    className="w-full border border-amber-400 rounded-lg p-2 mb-2 bg-gray-900 text-white placeholder-gray-400 focus:ring-2 focus:ring-amber-400"
+                    required
+                  />
+                  <textarea
+                    value={tipCommentText}
+                    onChange={e => setTipCommentText(e.target.value)}
+                    placeholder="Share your thoughts about this tip..."
+                    className="w-full border border-amber-400 rounded-lg p-3 mb-2 bg-gray-900 text-white placeholder-gray-400 focus:ring-2 focus:ring-amber-400"
+                    rows="3"
+                    required
+                  />
+                  <div className="flex items-center mb-2">
+                    {[1,2,3,4,5].map(star => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setTipCommentRating(star)}
+                        onMouseEnter={() => setTipCommentHover(star)}
+                        onMouseLeave={() => setTipCommentHover(0)}
+                        className="focus:outline-none"
+                      >
+                        <span className={`text-2xl ${(tipCommentHover || tipCommentRating) >= star ? 'text-yellow-400' : 'text-gray-600'}`}>★</span>
+                      </button>
+                    ))}
+                    <span className="ml-2 text-sm text-gray-300">{tipCommentRating > 0 ? `${tipCommentRating} star${tipCommentRating !== 1 ? 's' : ''}` : 'Select rating'}</span>
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!tipCommentText.trim() || !tipCommentUserName.trim() || tipCommentRating === 0}
+                    className="w-full px-6 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold shadow-lg transition"
+                  >
+                    Submit Review
+                  </button>
+                </form>
+                {tipComments.length > 0 ? (
+                  <div className="space-y-6">
+                    {tipComments.map(comment => (
+                      <div key={comment.id} className="border-b border-amber-400 pb-6 last:border-0 last:pb-0">
+                        <div className="flex justify-between items-start mb-2">
+                          <h3 className="font-semibold text-amber-300">{comment.userName}</h3>
+                          <span className="text-sm text-gray-400">{new Date(comment.time).toLocaleString()}</span>
+                        </div>
+                        <div className="flex mb-2">
+                          {[1,2,3,4,5].map(star => (
+                            <span key={star} className={`text-xl ${(comment.rating || 0) >= star ? 'text-yellow-400' : 'text-gray-600'}`}>★</span>
+                          ))}
+                        </div>
+                        {editingTipCommentId === comment.id ? (
+                          <form onSubmit={e => handleTipCommentEdit(e, comment.id)}>
+                            <textarea
+                              value={editTipCommentText}
+                              onChange={e => setEditTipCommentText(e.target.value)}
+                              className="w-full border border-amber-400 rounded-lg p-2 mb-2 bg-gray-900 text-white"
+                              rows="2"
+                            />
+                            <button type="submit" className="mr-2 px-3 py-1 bg-amber-500 text-gray-900 rounded font-semibold">Update</button>
+                            <button type="button" onClick={() => setEditingTipCommentId(null)} className="px-3 py-1 text-gray-300">Cancel</button>
+                          </form>
+                        ) : (
+                          <>
+                            <p className="text-gray-200 mb-2">{comment.text}</p>
+                            {comment.userId === currentUserId && (
+                              <div className="flex space-x-2">
+                                <button onClick={() => { setEditingTipCommentId(comment.id); setEditTipCommentText(comment.text); setTipCommentRating(comment.rating); }} className="text-amber-400 font-semibold">Edit</button>
+                                <button onClick={() => handleTipCommentDelete(comment.id)} className="text-red-400 font-semibold">Delete</button>
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12 text-gray-400">No reviews yet</div>
+                )}
+              </div>
+              {/* --- End Tip Review Section --- */}
+              <button
+                className="mt-8 w-full px-4 py-2 bg-amber-500 text-gray-900 rounded-lg hover:bg-amber-600 font-bold shadow-lg transition"
+                onClick={() => setSelectedTip(null)}
+              >
+                Close
+              </button>
+            </div>
           </motion.div>
         </div>
       )}
