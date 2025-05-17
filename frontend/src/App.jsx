@@ -31,6 +31,7 @@ import { AuthContext } from "./context/AuthContext.jsx";
 import Login from "./Pages/Auth/Login.jsx";
 import Register from "./Pages/Auth/Register.jsx";
 import CompleteProfile from "./Pages/Profile/CompleteProfile.jsx";
+import Profile from "./Pages/Profile.jsx";
 
 // Protected Routes
 import ProtectedRoute from "./Pages/ProtectedRoute.jsx";
@@ -122,10 +123,20 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/oauth-success" element={<AuthCallback />} />
             <Route path="/nutrition" element={<NutritionTrackerLanding />} />
+            
 
 
             <Route path="/home" element={<Home />} />
             <Route path="/about" element={<About/>} />
+
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              }
+            />
 
             <Route
               path="/profile/complete"
