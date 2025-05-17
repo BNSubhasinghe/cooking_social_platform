@@ -2,13 +2,18 @@ package Backend.Controller;
 
 import Backend.Model.TipModel;
 import Backend.Repository.TipRepository;
+import Backend.Repository.UserRepository;
+import Backend.Model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/tips")
@@ -18,14 +23,29 @@ public class TipController {
     @Autowired
     private TipRepository tipRepo;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @PostMapping
-    public TipModel addTip(@RequestBody TipModel tip) {
+    public TipModel addTip(@RequestBody TipModel tip, @AuthenticationPrincipal UserDetails userDetails) {
+        tip.setUserId(userDetails.getUsername());
+        // Fetch user name from the database
+        String userName = userRepository.findById(userDetails.getUsername())
+            .map(User::getName)
+            .orElse(userDetails.getUsername());
+        tip.setUserDisplayName(userName);
+        tip.setCreatedAt(LocalDateTime.now());
         return tipRepo.save(tip);
     }
 
     @GetMapping
     public List<TipModel> getAllTips() {
         return tipRepo.findAll();
+    }
+
+    @GetMapping("/my")
+    public List<TipModel> getMyTips(@AuthenticationPrincipal UserDetails userDetails) {
+        return tipRepo.findByUserId(userDetails.getUsername());
     }
 
     @GetMapping("/search")
@@ -46,14 +66,19 @@ public class TipController {
     @GetMapping("/tip-of-the-day")
     public TipModel getTipOfTheDay() {
         List<TipModel> tips = tipRepo.findAll();
-        return tips.isEmpty() ? null : tips.get(new Random().nextInt(tips.size()));
+        // Show tip with highest rating count (most rated)
+        return tips.stream()
+            .max((a, b) -> Integer.compare(a.getRatingCount(), b.getRatingCount()))
+            .orElse(null);
     }
 
     @PutMapping("/{id}")
-    public TipModel updateTip(@PathVariable String id, @RequestBody TipModel updatedTip) {
+    public TipModel updateTip(@PathVariable String id, @RequestBody TipModel updatedTip, @AuthenticationPrincipal UserDetails userDetails) {
         Optional<TipModel> optionalTip = tipRepo.findById(id);
         if (optionalTip.isPresent()) {
             TipModel tip = optionalTip.get();
+            // Only allow update if user is owner
+            if (!tip.getUserId().equals(userDetails.getUsername())) return null;
             tip.setTitle(updatedTip.getTitle());
             tip.setDescription(updatedTip.getDescription());
             tip.setCategory(updatedTip.getCategory());
@@ -108,9 +133,15 @@ public class TipController {
     }
 
     @DeleteMapping("/{id}")
-    public String deleteTip(@PathVariable String id) {
-        tipRepo.deleteById(id);
-        return "Tip deleted successfully";
+    public String deleteTip(@PathVariable String id, @AuthenticationPrincipal UserDetails userDetails) {
+        Optional<TipModel> optionalTip = tipRepo.findById(id);
+        if (optionalTip.isPresent()) {
+            TipModel tip = optionalTip.get();
+            if (!tip.getUserId().equals(userDetails.getUsername())) return "Unauthorized";
+            tipRepo.deleteById(id);
+            return "Tip deleted successfully";
+        }
+        return "Tip not found";
     }
 }
 
