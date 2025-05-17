@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import api from "../../utils/api";
-import { PlusCircle, Check, AlertCircle, Trash2, Utensils, Coffee, Pizza, Cookie } from "lucide-react";
+import { PlusCircle, Check, AlertCircle, Trash2, Utensils, Coffee, Pizza, Cookie, AlertTriangle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const FoodLog = ({ userId, date, calorieGoal = 2000 }) => {
@@ -15,6 +15,8 @@ const FoodLog = ({ userId, date, calorieGoal = 2000 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [dailyCalories, setDailyCalories] = useState(0);
   const [recentLogs, setRecentLogs] = useState([]);
+  const [deletingId, setDeletingId] = useState(null); // Track which item is being deleted
+  const [confirmDelete, setConfirmDelete] = useState(null); // Store item to confirm deletion
   
   // Fetch daily calories and recent logs on mount
   useEffect(() => {
@@ -70,19 +72,25 @@ const FoodLog = ({ userId, date, calorieGoal = 2000 }) => {
   };
 
   // Handle food log deletion
-  const handleDelete = async (foodLogId) => {
+  const handleDelete = async (foodLogId, foodName) => {
+    setDeletingId(foodLogId); // Set which item is being deleted
     setIsLoading(true);
     try {
       const response = await api.delete(
         `/nutrition/food/${userId}/${foodLogId}`
       );
-      setMessage(response.data || "Food log deleted successfully!");
+      setMessage(`"${foodName}" has been deleted from your food log`);
       setStatus("success");
+      
+      // Update the local state to immediately remove the deleted item
+      setRecentLogs(recentLogs.filter(log => log.id !== foodLogId));
+      
     } catch (err) {
       setMessage(err.response?.data || "Failed to delete food log");
       setStatus("error");
     } finally {
       setIsLoading(false);
+      setDeletingId(null); // Reset deleting state
 
       // Clear message after 3 seconds
       setTimeout(() => {
@@ -90,6 +98,48 @@ const FoodLog = ({ userId, date, calorieGoal = 2000 }) => {
         setStatus("");
       }, 3000);
     }
+  };
+
+  // Modified handleDelete to show confirmation first
+  const handleDeleteClick = (foodLogId, foodName) => {
+    setConfirmDelete({ id: foodLogId, name: foodName });
+  };
+
+  // Actual delete function after confirmation
+  const confirmDeleteItem = async () => {
+    if (!confirmDelete) return;
+    
+    const { id, name } = confirmDelete;
+    setDeletingId(id);
+    setIsLoading(true);
+    
+    try {
+      await api.delete(`/nutrition/food/${userId}/${id}`);
+      setMessage(`"${name}" has been deleted from your food log`);
+      setStatus("success");
+      
+      // Update the local state to immediately remove the deleted item
+      setRecentLogs(recentLogs.filter(log => log.id !== id));
+      
+    } catch (err) {
+      setMessage(err.response?.data || "Failed to delete food log");
+      setStatus("error");
+    } finally {
+      setIsLoading(false);
+      setDeletingId(null);
+      setConfirmDelete(null); // Close confirmation dialog
+
+      // Clear message after 3 seconds
+      setTimeout(() => {
+        setMessage("");
+        setStatus("");
+      }, 3000);
+    }
+  };
+
+  // Cancel deletion
+  const cancelDelete = () => {
+    setConfirmDelete(null);
   };
 
   // Calculate calorie progress percentage
@@ -150,6 +200,56 @@ const FoodLog = ({ userId, date, calorieGoal = 2000 }) => {
           ></motion.div>
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <AnimatePresence>
+        {confirmDelete && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            className="mb-6 p-5 bg-red-50 rounded-lg border border-red-200"
+          >
+            <div className="flex items-center mb-4">
+              <AlertTriangle className="text-red-500 mr-3" size={24} />
+              <h4 className="font-bold text-red-700">Delete Confirmation</h4>
+            </div>
+            <p className="text-gray-700 mb-4">
+              Are you sure you want to delete <strong>"{confirmDelete.name}"</strong> from your food log? This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={cancelDelete}
+                className="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg font-medium transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteItem}
+                disabled={isLoading}
+                className={`px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded-lg font-medium transition-colors flex items-center ${
+                  isLoading ? "opacity-70 cursor-not-allowed" : ""
+                }`}
+              >
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 size={16} className="mr-2" />
+                    Delete
+                  </>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Alert Message */}
       <AnimatePresence>
@@ -296,14 +396,21 @@ const FoodLog = ({ userId, date, calorieGoal = 2000 }) => {
                     <p className="font-bold text-lg">{log.calories} <span className="text-xs text-gray-500">kcal</span></p>
                     <motion.button
                       whileHover={{ scale: 1.2, color: '#ef4444' }}
-                      onClick={() => handleDelete(log.id)}
-                      disabled={isLoading}
+                      onClick={() => handleDeleteClick(log.id, log.foodName)}
+                      disabled={isLoading || confirmDelete}
                       className={`text-gray-400 hover:text-red-500 transition-colors ${
-                        isLoading ? "opacity-50 cursor-not-allowed" : ""
+                        isLoading && deletingId === log.id ? "opacity-50 cursor-not-allowed" : ""
                       }`}
                       title="Delete entry"
                     >
-                      <Trash2 size={18} />
+                      {isLoading && deletingId === log.id ? (
+                        <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      ) : (
+                        <Trash2 size={18} />
+                      )}
                     </motion.button>
                   </div>
                 </motion.div>

@@ -1,15 +1,21 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useContext, useState } from 'react';
 import { AuthContext } from '../context/AuthContext';
 import { motion } from 'framer-motion';
-import { FiMenu, FiX } from 'react-icons/fi';
+import { FiMenu, FiX, FiUser, FiSettings } from 'react-icons/fi';
 
 export const Header = () => {
+  const navigate = useNavigate(); // Moved inside the component
   const { user, logout } = useContext(AuthContext);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
+  };
+
+  // Navigate to profile page when profile is clicked
+  const goToProfile = () => {
+    navigate('/profile');
   };
 
   return (
@@ -49,7 +55,7 @@ export const Header = () => {
             { name: "Challenges", path: "/challenge-landing" },
             { name: "Recipes", path: "/landing-page" },
             { name: "Tips & Tricks", path: "/cookingTips" },
-            { name: "Nutrition", path: "/nutrition" }
+            { name: "Nutrition Tracker", path: "/nutrition" }
           ].map((item) => (
             <Link 
               key={item.name}
@@ -61,8 +67,20 @@ export const Header = () => {
           ))}
         </nav>
         
-        {/* Auth Button (Desktop) */}
-        <div className="hidden md:block">
+        {/* User Info and Auth Button (Desktop) */}
+        <div className="hidden md:flex items-center space-x-3">
+          {user && user.token && (
+            <motion.div 
+              onClick={goToProfile}
+              whileHover={{ scale: 1.05 }}
+              className="flex items-center bg-indigo-50 text-indigo-700 px-3 py-1.5 rounded-full cursor-pointer hover:bg-indigo-100 transition-colors group"
+            >
+              <FiUser size={16} className="mr-2" />
+              <span className="font-medium">{user.name}</span>
+              <FiSettings size={14} className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity" />
+            </motion.div>
+          )}
+          
           {user && user.token ? (
             <motion.button
               whileHover={{ scale: 1.05 }}
@@ -97,6 +115,23 @@ export const Header = () => {
           className="md:hidden bg-gray-50 border-t border-gray-200"
         >
           <div className="px-4 py-2 space-y-1">
+            {/* User Info (Mobile) */}
+            {user && user.token && (
+              <div 
+                onClick={() => {
+                  goToProfile();
+                  toggleMobileMenu();
+                }}
+                className="flex items-center justify-between bg-indigo-50 text-indigo-700 px-3 py-2 rounded-lg mb-2 cursor-pointer hover:bg-indigo-100 transition-colors"
+              >
+                <div className="flex items-center">
+                  <FiUser size={16} className="mr-2" />
+                  <span className="font-medium">{user.name}</span>
+                </div>
+                <FiSettings size={16} />
+              </div>
+            )}
+            
             {[
               { name: "Home", path: "/home" },
               { name: "About", path: "/about" },
