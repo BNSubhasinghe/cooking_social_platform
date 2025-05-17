@@ -44,6 +44,11 @@ const ChallengesPage = () => {
     challenge.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  // Add this for Challenge Wall search
+  const filteredAllActiveChallenges = allActiveChallenges.filter((challenge) =>
+    challenge.title.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   useEffect(() => {
     if (!user?.id) return;
     fetchChallenges(user.id);
@@ -236,9 +241,17 @@ const ChallengesPage = () => {
 
   return (
     <div>
-      <div className="min-h-screen bg-gray-50">
+      <div
+        className="min-h-screen bg-gray-50"
+        style={{
+          backgroundImage: "url('http://localhost:8080/uploads/challenges/food-4k-1vrcb0mw76zcg4qf.jpg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+          backgroundRepeat: "no-repeat"
+        }}
+      >
         {/* --- Kristine's Kitchen style icon nav at the top --- */}
-        <div className="w-full bg-white shadow-md py-4 mb-8">
+        <div className="w-full shadow-md py-4 mb-8" style={{background: "#fff"}}>
           <div className="max-w-7xl mx-auto flex flex-wrap justify-center gap-6 items-center">
             <button
               onClick={() => {
@@ -254,7 +267,7 @@ const ChallengesPage = () => {
                 className={`w-20 h-20 rounded-full shadow group-hover:scale-105 transition ${!showChallengeWall ? 'ring-4 ring-amber-400' : ''}`}
               />
               <span className={`mt-2 text-sm font-semibold group-hover:text-amber-600 ${!showChallengeWall ? 'text-amber-600' : 'text-gray-700'}`}>
-                All Challenges
+                My Challenges
               </span>
             </button>
             <button
@@ -271,7 +284,7 @@ const ChallengesPage = () => {
               className={`w-20 h-20 rounded-full shadow group-hover:scale-105 transition ${showChallengeWall ? 'ring-4 ring-amber-400' : ''}`}
             />
             <span className={`mt-2 text-sm font-semibold group-hover:text-amber-600 ${showChallengeWall ? 'text-amber-600' : 'text-gray-700'}`}>
-              Challenge Wall
+              Challenges
             </span>
           </button>
           </div>
@@ -289,7 +302,7 @@ const ChallengesPage = () => {
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 p-6">
+        <div className="flex-1 p-6" style={{background: "transparent"}}>
           {/* Challenge Form */}
           {showForm && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -427,11 +440,11 @@ const ChallengesPage = () => {
     <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">Challenges</h2>
     <div className="w-full flex justify-center">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 justify-items-center w-full">
-        {allActiveChallenges.length > 0 ? (
-          allActiveChallenges.map((challenge) => (
+        {filteredAllActiveChallenges.length > 0 ? (
+          filteredAllActiveChallenges.map((challenge) => (
             <div
               key={challenge.id}
-              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer flex flex-col"
               style={{ width: 370, minHeight: 420, maxWidth: 400 }}
               onClick={() => handleSelectChallenge(challenge)} 
             >
@@ -456,12 +469,30 @@ const ChallengesPage = () => {
                     {challenge.theme || "General"}
                   </span>
                 </div>
+                {/* Move date badge to bottom right over the image */}
+                <div className="absolute bottom-3 right-3">
+                  <span className="bg-blue-100 text-blue-500 font-bold text-xs px-3 py-1 rounded-full shadow">
+                    Ends on {new Date(challenge.endDate).toLocaleDateString()}
+                  </span>
+                </div>
               </div>
-              <div className="p-5">
+              <div className="p-5 flex flex-col flex-1">
                 <h3 className="text-xl font-bold text-gray-800 line-clamp-2">{challenge.title}</h3>
+                {/* Remove date from here */}
                 <p className="text-gray-600 text-sm mb-4 line-clamp-2">
                   {challenge.description || "No description available."}
                 </p>
+                <div className="flex gap-2 mt-auto">
+                  <button
+                    onClick={e => {
+                      e.stopPropagation();
+                      handleSelectChallenge(challenge);
+                    }}
+                    className="flex-1 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg font-medium hover:from-blue-600 hover:to-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                  >
+                    View Details
+                  </button>
+                </div>
               </div>
             </div>
           ))
@@ -525,16 +556,18 @@ const ChallengesPage = () => {
                     {challenge.theme || "General"}
                   </span>
                 </div>
+                {/* Move date badge to bottom right over the image */}
+                <div className="absolute bottom-3 right-3">
+                  <span className="bg-blue-100 text-blue-500 font-bold text-xs px-3 py-1 rounded-full shadow">
+                    Ends on {new Date(challenge.endDate).toLocaleDateString()}
+                  </span>
+                </div>
               </div>
 
               <div className="p-5">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="text-xl font-bold text-gray-800 line-clamp-2">{challenge.title}</h3>
-                  <div className="flex items-center bg-blue-100 px-2 py-1 rounded-full">
-                    <span className="text-blue-500 font-bold text-xs">
-                      {new Date(challenge.startDate).toLocaleDateString()} - {new Date(challenge.endDate).toLocaleDateString()}
-                    </span>
-                  </div>
+                  {/* Remove date from here */}
                 </div>
                 
                 <p className="text-gray-600 text-sm mb-4 line-clamp-2">
@@ -622,16 +655,18 @@ const ChallengesPage = () => {
                             {challenge.theme || "General"}
                           </span>
                         </div>
+                        {/* Move date badge to bottom right over the image */}
+                        <div className="absolute bottom-3 right-3">
+                          <span className="bg-blue-100 text-blue-500 font-bold text-xs px-3 py-1 rounded-full shadow">
+                            Ends on {new Date(challenge.endDate).toLocaleDateString()}
+                          </span>
+                        </div>
                       </div>
 
                       <div className="p-5">
                         <div className="flex justify-between items-start mb-2">
                           <h3 className="text-xl font-bold text-gray-800 line-clamp-2">{challenge.title}</h3>
-                          <div className="flex items-center bg-gray-100 px-2 py-1 rounded-full">
-                            <span className="text-gray-500 font-bold text-xs">
-                              Ended on {new Date(challenge.endDate).toLocaleDateString()}
-                            </span>
-                          </div>
+                          {/* Remove date from here */}
                         </div>
                         
                         <p className="text-gray-600 text-sm mb-4 line-clamp-2">
