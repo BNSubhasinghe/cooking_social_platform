@@ -4,6 +4,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.HashMap;
 import java.util.Map;
+import java.time.LocalDateTime;
 
 @Document("cookingTips") // MongoDB collection name
 public class TipModel {
@@ -18,7 +19,9 @@ public class TipModel {
     private boolean featured = false; // For Admins to highlight
     private Map<String, Integer> userRatings = new HashMap<>(); // userId -> rating
 
-    private String userId; // <-- Add this line
+    private String userId;
+    private String userDisplayName; // Add this line
+    private LocalDateTime createdAt; // Add this line
 
     public TipModel() {}
 
@@ -26,6 +29,7 @@ public class TipModel {
         this.title = title;
         this.description = description;
         this.category = category;
+        this.createdAt = LocalDateTime.now(); // Set createdAt on creation
     }
 
     // Getters and Setters
@@ -55,6 +59,12 @@ public class TipModel {
 
     public String getUserId() { return userId; }
     public void setUserId(String userId) { this.userId = userId; }
+
+    public String getUserDisplayName() { return userDisplayName; }
+    public void setUserDisplayName(String userDisplayName) { this.userDisplayName = userDisplayName; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 
     public Integer getUserRating(String userId) {
         return userRatings.get(userId);

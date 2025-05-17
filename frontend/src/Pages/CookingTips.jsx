@@ -3,10 +3,17 @@ import { getAllTips, getTipOfTheDay, searchTips, getFeaturedTips, getTipsByCateg
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import tipBg from '../assets/Tip.jpg';
+import { format } from 'date-fns';
+
+if (!localStorage.getItem('tempUserId')) {
+  localStorage.setItem('tempUserId', crypto.randomUUID());
+}
+const loggedInUserId = localStorage.getItem('userId'); // Set this on login!
+const tempUserId = localStorage.getItem('tempUserId');
+const currentUserId = loggedInUserId || tempUserId;
 
 const CookingTips = () => {
   const [tips, setTips] = useState([]);
-  const [tipOfDay, setTipOfDay] = useState(null);
   const [search, setSearch] = useState('');
   const [filteredTips, setFilteredTips] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -26,8 +33,19 @@ const CookingTips = () => {
   const [userRatings, setUserRatings] = useState({});
   const [showMyTips, setShowMyTips] = useState(false); // Add toggle for my tips
 
-  const tempUserId = localStorage.getItem('tempUserId') || 
-    Math.random().toString(36).substring(7);
+  // Helper to get the most-rated tip
+  const getMostRatedTip = (tipsArr) => {
+    if (!tipsArr || tipsArr.length === 0) return null;
+    // Find tip with highest ratingCount; break ties by latest createdAt
+    return tipsArr.reduce((prev, curr) => {
+      if (curr.ratingCount > prev.ratingCount) return curr;
+      if (curr.ratingCount === prev.ratingCount) {
+        // If tie, show the latest tip
+        return new Date(curr.createdAt) > new Date(prev.createdAt) ? curr : prev;
+      }
+      return prev;
+    }, tipsArr[0]);
+  };
 
   useEffect(() => {
     async function fetchData() {
@@ -43,43 +61,26 @@ const CookingTips = () => {
         setTips(tipsRes.data);
         setFilteredTips(tipsRes.data);
         setFeaturedTips(featuredRes.data);
-        
-        // Load user ratings for all tips
+
         if (tipsRes.data && tipsRes.data.length > 0) {
           await loadUserRatings(tipsRes.data);
-          
-          // Find the highest rated tip only if there are tips
-          const highestRatedTip = tipsRes.data.reduce((prev, current) => {
-            return (prev.averageRating > current.averageRating) ? prev : current;
-          }, tipsRes.data[0]); // Provide initial value
-          setTipOfDay(highestRatedTip);
-        } else {
-          setTipOfDay(null);
         }
       } catch (err) {
         console.error('Failed to fetch tips:', err);
         setTips([]);
         setFilteredTips([]);
         setFeaturedTips([]);
-        setTipOfDay(null);
       } finally {
         setLoading(false);
       }
     }
     fetchData();
-  }, [showMyTips]); // re-fetch when toggling between all/my tips
-
-  useEffect(() => {
-    // Save temporary user ID
-    if (!localStorage.getItem('tempUserId')) {
-      localStorage.setItem('tempUserId', tempUserId);
-    }
-  }, [tempUserId]);
+  }, [showMyTips]); 
 
   const loadUserRatings = async (tips) => {
     try {
       const ratingPromises = tips.map(tip => 
-        getUserRating(tip.id, tempUserId)
+        getUserRating(tip.id, currentUserId)
           .then(response => ({
             tipId: tip.id,
             rating: response.data
@@ -152,20 +153,25 @@ const CookingTips = () => {
   const handleRate = async (id, rating) => {
     try {
       setRatingLoading(id);
-      await rateTip(id, rating, tempUserId);
+      await rateTip(id, rating, currentUserId);
       setRatingSuccess(id);
-      
+
       // Update local user ratings
       setUserRatings(prev => ({
         ...prev,
         [id]: rating
       }));
 
-      // Refresh tips after rating
-      const updatedTips = await getAllTips();
+      // FIX: Fetch only relevant tips after rating
+      let updatedTips;
+      if (showMyTips) {
+        updatedTips = await getMyTips();
+      } else {
+        updatedTips = await getAllTips();
+      }
       setTips(updatedTips.data);
       setFilteredTips(updatedTips.data);
-      
+
       setTimeout(() => {
         setRatingSuccess(null);
       }, 2000);
@@ -240,7 +246,8 @@ const CookingTips = () => {
   const renderStars = (tip, isTipOfDay = false) => {
     const currentHover = hoverRating[tip.id] || 0;
     const userRating = userRatings[tip.id];
-    const displayRating = currentHover || userRating || Math.round(tip.averageRating);
+    // Priority: hover > userRating > averageRating
+    const displayRating = currentHover ? currentHover : (userRating ? userRating : Math.round(tip.averageRating));
 
     return (
       <div className="flex space-x-1 relative">
@@ -285,6 +292,9 @@ const CookingTips = () => {
     );
   }
 
+  // Get the most-rated tip from filteredTips
+  const mostRatedTip = getMostRatedTip(filteredTips);
+
   return (
     <div
       className="min-h-screen bg-gray-900 bg-cover bg-center py-10 px-6"
@@ -318,27 +328,50 @@ const CookingTips = () => {
           </div>
         </div>
 
-        {/* Tip of the Day */}
-        {tipOfDay && (
+        {/* Most Rated Tip Card */}
+        {mostRatedTip && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="bg-amber-100 border-l-4 border-amber-500 p-6 mb-8 rounded-lg shadow-lg"
+            className="bg-gradient-to-r from-amber-100 via-yellow-50 to-amber-200 border-l-8 border-amber-500 p-8 mb-10 rounded-2xl shadow-2xl"
           >
-            <div className="flex justify-between items-start mb-4">
-              <h2 className="text-2xl font-semibold">Tip of the Day</h2>
-              <div className="flex items-center space-x-2">
-                <span className="text-yellow-600 font-medium">⭐ {Math.round(tipOfDay.averageRating)}</span>
-                <span className="text-gray-500">({tipOfDay.ratingCount} ratings)</span>
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h2 className="text-3xl font-bold text-amber-700 mb-2 flex items-center gap-2">
+                  <span role="img" aria-label="star">⭐</span>
+                  Most Rated Tip
+                </h2>
+                <div className="flex flex-col gap-1">
+                  <span className={`inline-block px-3 py-1 text-sm rounded-full ${categoryColors[mostRatedTip.category]}`}>
+                    {mostRatedTip.category}
+                  </span>
+                  <span className="text-gray-700 font-medium">
+                    Posted by <span className="text-blue-700">{mostRatedTip.userDisplayName}</span>
+                  </span>
+                  {mostRatedTip.createdAt && (
+                    <span className="text-gray-500 text-sm">
+                      {format(new Date(mostRatedTip.createdAt), 'PPpp')}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex flex-col items-end">
+                <span className="text-yellow-600 font-bold text-xl flex items-center gap-1">
+                  ⭐ {Math.round(mostRatedTip.averageRating)}
+                </span>
+                <span className="text-gray-500 text-sm">
+                  ({mostRatedTip.ratingCount} ratings)
+                </span>
               </div>
             </div>
-            <p className="text-lg mb-4">{tipOfDay.description}</p>
+            <h3 className="text-2xl font-semibold mb-2">{mostRatedTip.title}</h3>
+            <p className="text-gray-700 mb-4">{mostRatedTip.description}</p>
             <div className="flex items-center justify-between">
-              <div className={`inline-block px-3 py-1 text-sm rounded-full ${categoryColors[tipOfDay.category]}`}>
-                {tipOfDay.category}
-              </div>
-              {renderStars(tipOfDay, true)}
+              {renderStars(mostRatedTip, true)}
+              {mostRatedTip.featured && (
+                <span className="text-amber-500 text-base ml-4">✨ Featured</span>
+              )}
             </div>
           </motion.div>
         )}
@@ -446,10 +479,19 @@ const CookingTips = () => {
                     </button>
                   </div>
                 )}
-                {/* ...rest of tip card... */}
+                <div className="flex flex-col gap-1 mb-2">
+                  <span className="text-gray-700 font-medium">
+                    Posted by <span className="text-blue-700">{tip.userDisplayName}</span>
+                    {tip.createdAt && (
+                      <span className="text-gray-500 text-sm ml-2">
+                        {format(new Date(tip.createdAt), 'PPpp')}
+                      </span>
+                    )}
+                  </span>
+                </div>
                 <h3 className="text-xl font-semibold mb-3 pr-16">{tip.title}</h3>
                 <p className="text-gray-700 mb-4">{tip.description}</p>
-                {/* ...existing code... */}
+                {/* ...rest of tip card... */}
                 <div className="flex flex-col space-y-3">
                   <div className="flex justify-between items-center">
                     <span className={`text-sm px-3 py-1 rounded-full ${categoryColors[tip.category]}`}>
