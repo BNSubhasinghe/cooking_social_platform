@@ -6,6 +6,11 @@ import Backend.DTO.ChallengeRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import java.security.Principal;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -17,6 +22,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/challenges")
+@CrossOrigin(origins = "http://localhost:5173")
 public class ChallengeController {
 
     @Autowired
@@ -26,27 +32,82 @@ public class ChallengeController {
     private final SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm");
 
     @GetMapping("/")
-    public List<ChallengeModel> getAllChallenges() {
-        return challengeRepository.findAll();
+    public List<ChallengeModel> getAllChallenges(@AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            String userId = userDetails.getUsername();
+            return challengeRepository.findByUserId(userId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Collections.emptyList();
+        }
     }
 
     @GetMapping("/active")
-    public List<ChallengeModel> getActiveChallenges() {
-        return challengeRepository.findByEndDateAfter(new Date());
+    public List<ChallengeModel> getActiveChallenges(@AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            if (userDetails == null) {
+                System.err.println("UserDetails is null!");
+                return Collections.emptyList();
+            }
+            String userId = userDetails.getUsername();
+            return challengeRepository.findByUserIdAndEndDateAfter(userId, new Date());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Collections.emptyList();
+        }
     }
 
     @GetMapping("/past")
-    public List<ChallengeModel> getPastChallenges() {
-        return challengeRepository.findByEndDateBefore(new Date());
+    public List<ChallengeModel> getPastChallenges(@AuthenticationPrincipal UserDetails userDetails) {
+        try {
+            if (userDetails == null) {
+                System.err.println("UserDetails is null!");
+                return Collections.emptyList();
+            }
+            String userId = userDetails.getUsername();
+            return challengeRepository.findByUserIdAndEndDateBefore(userId, new Date());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Collections.emptyList();
+        }
+    }
+
+    @GetMapping("/all")
+    public List<ChallengeModel> getAllChallengesNoAuth() {
+        List<ChallengeModel> challenges = challengeRepository.findAll();
+        System.out.println("Found challenges: " + challenges.size());
+        return challenges;
+    }
+
+    @GetMapping("/active/all")
+    public List<ChallengeModel> getAllActiveChallenges() {
+        return challengeRepository.findByEndDateAfter(new Date());
     }
 
     @GetMapping("/{id}")
-    public ChallengeModel getChallengeById(@PathVariable String id) {
-        return challengeRepository.findById(id).orElse(null);
+    public ChallengeModel getChallengeById(@PathVariable String id, @AuthenticationPrincipal UserDetails userDetails) {
+        ChallengeModel challenge = challengeRepository.findById(id).orElse(null);
+        if (challenge == null) return null;
+        String userId = userDetails.getUsername();
+        if (!challenge.getUserId().equals(userId)) return null;
+        return challenge;
     }
 
-    @PostMapping("/")
-    public ChallengeModel createChallenge(@ModelAttribute ChallengeRequest req) throws IOException {
+    @PostMapping(value = "/", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<?> createChallenge(@ModelAttribute ChallengeRequest req, @AuthenticationPrincipal UserDetails userDetails) throws IOException {
+        // Null check for userDetails
+        if (userDetails == null) {
+            return ResponseEntity.status(401).body("Unauthorized");
+        }
+        // Log incoming request fields for debugging
+        System.out.println("Received challenge:");
+        System.out.println("Title: " + req.getTitle());
+        System.out.println("Theme: " + req.getTheme());
+        System.out.println("StartDate: " + req.getStartDate());
+        System.out.println("EndDate: " + req.getEndDate());
+        System.out.println("Description: " + req.getDescription());
+        System.out.println("File: " + (req.getFile() != null ? req.getFile().getOriginalFilename() : "null"));
+
         Date startDate = parseDate(req.getStartDate());
         Date endDate = parseDate(req.getEndDate());
 
@@ -56,31 +117,35 @@ public class ChallengeController {
         challenge.setTheme(req.getTheme());
         challenge.setStartDate(startDate);
         challenge.setEndDate(endDate);
+        challenge.setUserId(userDetails.getUsername());
 
         MultipartFile file = req.getFile();
         if (file != null && !file.isEmpty()) {
             String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
             Path uploadPath = Paths.get(UPLOAD_DIR);
-            
+
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
-            
+
             Path filePath = uploadPath.resolve(fileName);
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
             challenge.setImageUrl("/uploads/challenges/" + fileName);
         }
 
-        return challengeRepository.save(challenge);
+        return ResponseEntity.ok(challengeRepository.save(challenge));
     }
 
     @PutMapping("/{id}")
     public ChallengeModel updateChallenge(
             @PathVariable String id,
-            @ModelAttribute ChallengeRequest req) throws IOException {
+            @ModelAttribute ChallengeRequest req,
+            @AuthenticationPrincipal UserDetails userDetails) throws IOException {
 
         ChallengeModel challenge = challengeRepository.findById(id).orElse(null);
         if (challenge == null) return null;
+        String userId = userDetails.getUsername();
+        if (!challenge.getUserId().equals(userId)) return null;
 
         if (req.getTitle() != null) challenge.setTitle(req.getTitle());
         if (req.getDescription() != null) challenge.setDescription(req.getDescription());
@@ -98,14 +163,14 @@ public class ChallengeController {
                     Files.delete(oldImagePath);
                 }
             }
-            
+
             String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
             Path uploadPath = Paths.get(UPLOAD_DIR);
-            
+
             if (!Files.exists(uploadPath)) {
                 Files.createDirectories(uploadPath);
             }
-            
+
             Path filePath = uploadPath.resolve(fileName);
             Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
             challenge.setImageUrl("/uploads/challenges/" + fileName);
@@ -115,9 +180,12 @@ public class ChallengeController {
     }
 
     @DeleteMapping("/{id}")
-    public String deleteChallenge(@PathVariable String id) {
+    public String deleteChallenge(@PathVariable String id, @AuthenticationPrincipal UserDetails userDetails) {
         ChallengeModel challenge = challengeRepository.findById(id).orElse(null);
-        if (challenge != null && challenge.getImageUrl() != null) {
+        if (challenge == null) return "Challenge not found.";
+        String userId = userDetails.getUsername();
+        if (!challenge.getUserId().equals(userId)) return "Unauthorized";
+        if (challenge.getImageUrl() != null) {
             try {
                 String fileName = challenge.getImageUrl().replace("/uploads/challenges/", "");
                 Path imagePath = Paths.get(UPLOAD_DIR + fileName);
@@ -135,7 +203,8 @@ public class ChallengeController {
     @PostMapping("/{id}/submit")
     public ChallengeModel submitRecipe(
             @PathVariable String id,
-            @RequestParam("recipeId") String recipeId) {
+            @RequestParam("recipeId") String recipeId,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
         ChallengeModel challenge = challengeRepository.findById(id).orElse(null);
         if (challenge == null) return null;
@@ -149,25 +218,36 @@ public class ChallengeController {
     }
 
     @PostMapping("/{id}/vote/{recipeId}")
-    public ChallengeModel voteForSubmission(
+    public ResponseEntity<?> voteForSubmission(
             @PathVariable String id,
-            @PathVariable String recipeId) {
+            @PathVariable String recipeId,
+            @AuthenticationPrincipal UserDetails userDetails) {
 
         ChallengeModel challenge = challengeRepository.findById(id).orElse(null);
-        if (challenge == null) return null;
+        if (challenge == null) return ResponseEntity.badRequest().body("Challenge not found");
+        if (userDetails == null) return ResponseEntity.status(401).body("Unauthorized");
 
+        String userId = userDetails.getUsername();
+        boolean found = false;
         for (ChallengeModel.Submission submission : challenge.getSubmissions()) {
             if (submission.getRecipeId().equals(recipeId)) {
+                if (submission.getVotedUserIds().contains(userId)) {
+                    return ResponseEntity.badRequest().body("You have already voted for this recipe.");
+                }
                 submission.setVotes(submission.getVotes() + 1);
+                submission.getVotedUserIds().add(userId);
+                found = true;
                 break;
             }
         }
+        if (!found) return ResponseEntity.badRequest().body("Submission not found.");
 
-        return challengeRepository.save(challenge);
+        challengeRepository.save(challenge);
+        return ResponseEntity.ok(challenge);
     }
 
     @GetMapping("/{id}/leaderboard")
-    public List<ChallengeModel.Submission> getLeaderboard(@PathVariable String id) {
+    public List<ChallengeModel.Submission> getLeaderboard(@PathVariable String id, @AuthenticationPrincipal UserDetails userDetails) {
         ChallengeModel challenge = challengeRepository.findById(id).orElse(null);
         if (challenge == null) return null;
 
@@ -176,10 +256,17 @@ public class ChallengeController {
     }
 
     private Date parseDate(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            return null;
+        }
         try {
-            return formatter.parse(dateStr);
+            return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm").parse(dateStr);
         } catch (Exception e) {
-            throw new RuntimeException("Invalid date format. Expected yyyy-MM-dd'T'HH:mm", e);
+            try {
+                return new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss").parse(dateStr);
+            } catch (Exception ex) {
+                throw new RuntimeException("Invalid date format. Expected yyyy-MM-dd'T'HH:mm or yyyy-MM-dd'T'HH:mm:ss, got: " + dateStr, ex);
+            }
         }
     }
 }
