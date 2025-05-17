@@ -95,4 +95,10 @@ public class UserController {
     public ResponseEntity<?> unfollowUser(@PathVariable String id, @RequestParam String followerId) {
         return userService.unfollowUser(id, followerId);
     }
+
+    @GetMapping("/me")
+    public ResponseEntity<?> getCurrentUser(@AuthenticationPrincipal org.springframework.security.core.userdetails.UserDetails userDetails) {
+        // This will return the MongoDB _id if your CustomUserDetails.getUsername() returns user.getId()
+        return ResponseEntity.ok(Map.of("id", userDetails.getUsername()));
+    }
 }

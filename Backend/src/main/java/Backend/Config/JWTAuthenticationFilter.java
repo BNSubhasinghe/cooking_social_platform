@@ -10,6 +10,8 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.io.IOException;
 import java.security.Key;
@@ -18,9 +20,11 @@ import java.util.Date;
 
 public class JWTAuthenticationFilter extends OncePerRequestFilter {
     private final Key jwtSecret;
+    private final UserDetailsService userDetailsService;
 
-    public JWTAuthenticationFilter(Key jwtSecret) {
+    public JWTAuthenticationFilter(Key jwtSecret, UserDetailsService userDetailsService) {
         this.jwtSecret = jwtSecret;
+        this.userDetailsService = userDetailsService;
     }
 
     @Override
@@ -53,12 +57,11 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
                 return;
             }
 
-            //create authentication object
-            UsernamePasswordAuthenticationToken auth = new UsernamePasswordAuthenticationToken(
-                    userId, null, Collections.singletonList(new SimpleGrantedAuthority("USER")));
-
-            //set authentication in context
-            SecurityContextHolder.getContext().setAuthentication(auth);
+            // Load UserDetails and set as principal
+            UserDetails userDetails = userDetailsService.loadUserByUsername(userId);
+            UsernamePasswordAuthenticationToken authentication =
+                new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+            SecurityContextHolder.getContext().setAuthentication(authentication);
 
         } catch (Exception e) {
             //if token is invalid, clear the security context
