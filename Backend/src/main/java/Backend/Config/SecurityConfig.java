@@ -52,10 +52,9 @@ public class SecurityConfig {
                         .requestMatchers("/oauth2/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/api/challenges/**").authenticated()
-                        .requestMatchers("/recipes**").permitAll()
+                        .requestMatchers("/recipes/**").permitAll() // <-- FIXED
                         .requestMatchers("/api/recipes**").permitAll()
                         .requestMatchers("/api/tips/**").permitAll()
-                        .requestMatchers("/api/tips").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(t -> t.loginPage("/oauth2/authorization/google")
