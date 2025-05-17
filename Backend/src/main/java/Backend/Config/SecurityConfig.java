@@ -55,7 +55,6 @@ public class SecurityConfig {
                         .requestMatchers("/recipes/**").permitAll() // <-- FIXED
                         .requestMatchers("/api/recipes**").permitAll()
                         .requestMatchers("/api/tips/**").permitAll()
-                        .requestMatchers("/api/tips").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
                         .anyRequest().authenticated())
                 .oauth2Login(t -> t.loginPage("/oauth2/authorization/google")

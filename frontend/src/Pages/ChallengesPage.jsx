@@ -9,7 +9,7 @@ import {
   submitToChallenge,
   voteForSubmission,
   getChallengeLeaderboard,
-  getAllActiveChallenges // <-- add import
+  getAllActiveChallenges 
 } from '../api/challengeApi';
 import { getAllRecipes } from '../api/recipeApi';
 import { AuthContext } from '../context/AuthContext';
@@ -250,7 +250,7 @@ const ChallengesPage = () => {
           backgroundRepeat: "no-repeat"
         }}
       >
-        {/* --- Kristine's Kitchen style icon nav at the top --- */}
+        
         <div className="w-full shadow-md py-4 mb-8" style={{background: "#fff"}}>
           <div className="max-w-7xl mx-auto flex flex-wrap justify-center gap-6 items-center">
             <button
@@ -348,36 +348,36 @@ const ChallengesPage = () => {
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
-  <div>
-    <label className="block text-sm text-gray-500 mb-1">Start Date</label>
-    <input
-      type="datetime-local"
-      name="startDate"
-      value={formData.startDate || new Date().toISOString().slice(0, 16)} 
-      onChange={handleInputChange}
-      className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-      min={new Date().toISOString().slice(0, 16)} 
-      required
-      disabled={!!editingChallenge} 
-    />
-  </div>
-  <div>
-    <label className="block text-sm text-gray-500 mb-1">End Date</label>
-    <input
-      type="datetime-local"
-      name="endDate"
-      value={formData.endDate}
-      onChange={handleInputChange}
-      className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-      min={
-        editingChallenge
-          ? new Date().toISOString().slice(0, 16) 
-          : formData.startDate || new Date().toISOString().slice(0, 16) 
-      }
-      required
-    />
-  </div>
-</div>
+                    <div>
+                      <label className="block text-sm text-gray-500 mb-1">Start Date</label>
+                      <input
+                        type="datetime-local"
+                        name="startDate"
+                        value={formData.startDate || new Date().toISOString().slice(0, 16)} 
+                        onChange={handleInputChange}
+                        className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                        min={new Date().toISOString().slice(0, 16)} 
+                        required
+                        disabled={!!editingChallenge} 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm text-gray-500 mb-1">End Date</label>
+                      <input
+                        type="datetime-local"
+                        name="endDate"
+                        value={formData.endDate}
+                        onChange={handleInputChange}
+                        className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                        min={
+                          editingChallenge
+                            ? new Date().toISOString().slice(0, 16) 
+                            : formData.startDate || new Date().toISOString().slice(0, 16) 
+                        }
+                        required
+                      />
+                    </div>
+                  </div>
                     <div>
                       <label className="block text-sm text-gray-500 mb-1">Description</label>
                       <textarea
@@ -738,75 +738,75 @@ const ChallengesPage = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-  {/* Submit Recipe Section */}
-  {new Date(selectedChallenge.endDate) > new Date() && (
-    <div>
-      <h3 className="text-lg font-semibold mb-3">Submit Your Recipe</h3>
-      <form onSubmit={handleSubmitRecipe} className="space-y-3">
-        <div>
-          <select
-            name="recipeId"
-            value={submissionData.recipeId}
-            onChange={(e) => setSubmissionData({ recipeId: e.target.value })}
-            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-            required
-          >
-            <option value="">Select a recipe</option>
-            {recipes.map(recipe => (
-              <option key={recipe.id} value={recipe.id}>{recipe.title}</option>
-            ))}
-          </select>
-        </div>
-        <button
-          type="submit"
-          className="w-full p-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition"
-        >
-          Submit Recipe
-        </button>
-      </form>
-    </div>
-  )}
+                    {/* Submit Recipe Section */}
+                    {new Date(selectedChallenge.endDate) > new Date() && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-3">Submit Your Recipe</h3>
+                        <form onSubmit={handleSubmitRecipe} className="space-y-3">
+                          <div>
+                            <select
+                              name="recipeId"
+                              value={submissionData.recipeId}
+                              onChange={(e) => setSubmissionData({ recipeId: e.target.value })}
+                              className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+                              required
+                            >
+                              <option value="">Select a recipe</option>
+                              {recipes.map(recipe => (
+                                <option key={recipe.id} value={recipe.id}>{recipe.title}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <button
+                            type="submit"
+                            className="w-full p-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition"
+                          >
+                            Submit Recipe
+                          </button>
+                        </form>
+                      </div>
+                    )}
 
-  {/* Leaderboard Section */}
-  <div>
-    <h3 className="text-lg font-semibold mb-3">Leaderboard</h3>
-    {leaderboard.length > 0 ? (
-      <div className="space-y-3">
-        {leaderboard
-          .sort((a, b) => b.votes - a.votes) 
-          .map((submission, index) => {
-            const recipe = recipes.find(r => r.id === submission.recipeId || r._id === submission.recipeId);
-            const hasVoted = submission.votedUserIds && submission.votedUserIds.includes(user.id);
-            return recipe ? (
-              <div key={submission.recipeId} className="border rounded-lg p-3 flex justify-between items-center">
-                <div>
-                  <h4 className="font-medium">
-                    #{index + 1} {recipe.title}
-                  </h4>
-                  <p className="text-sm text-gray-500">{submission.votes} votes</p>
-                </div>
-                {new Date(selectedChallenge.endDate) > new Date() && (
-                  <button
-                    onClick={() => handleVote(submission.recipeId)}
-                    disabled={hasVoted}
-                    style={{
-                      backgroundColor: hasVoted ? 'green' : 'black',
-                      color: 'white'
-                    }}
-                    className="px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition"
-                  >
-                    {hasVoted ? 'Voted' : 'Vote'}
-                  </button>
-                )}
-              </div>
-            ) : null;
-          })}
-      </div>
-    ) : (
-      <p className="text-gray-500">No submissions yet. Be the first to submit!</p>
-    )}
-  </div>
-</div>
+                      {/* Leaderboard Section */}
+                      <div>
+                        <h3 className="text-lg font-semibold mb-3">Leaderboard</h3>
+                        {leaderboard.length > 0 ? (
+                          <div className="space-y-3">
+                            {leaderboard
+                              .sort((a, b) => b.votes - a.votes) 
+                              .map((submission, index) => {
+                                const recipe = recipes.find(r => r.id === submission.recipeId || r._id === submission.recipeId);
+                                const hasVoted = submission.votedUserIds && submission.votedUserIds.includes(user.id);
+                                return recipe ? (
+                                  <div key={submission.recipeId} className="border rounded-lg p-3 flex justify-between items-center">
+                                    <div>
+                                      <h4 className="font-medium">
+                                        #{index + 1} {recipe.title}
+                                      </h4>
+                                      <p className="text-sm text-gray-500">{submission.votes} votes</p>
+                                    </div>
+                                    {new Date(selectedChallenge.endDate) > new Date() && (
+                                      <button
+                                        onClick={() => handleVote(submission.recipeId)}
+                                        disabled={hasVoted}
+                                        style={{
+                                          backgroundColor: hasVoted ? 'green' : 'black',
+                                          color: 'white'
+                                        }}
+                                        className="px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition"
+                                      >
+                                        {hasVoted ? 'Voted' : 'Vote'}
+                                      </button>
+                                    )}
+                                  </div>
+                                ) : null;
+                              })}
+                          </div>
+                        ) : (
+                          <p className="text-gray-500">No submissions yet. Be the first to submit!</p>
+                        )}
+                      </div>
+                    </div>
                 </div>
               </div>
             </div>

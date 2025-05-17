@@ -30,7 +30,7 @@ const ChallengeLanding = () => {
         <div className="absolute inset-0 bg-black opacity-70"></div>
         <div className="relative h-screen overflow-hidden">
           <img 
-            src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070" 
+            src="http://localhost:8080/uploads/challenges/masterchef-challenges-2.jpeg" 
             alt="Challenge background"
             className="w-full h-full object-cover"
           />

@@ -2,6 +2,8 @@ package Backend.Controller;
 
 import Backend.Model.TipModel;
 import Backend.Repository.TipRepository;
+import Backend.Repository.UserRepository;
+import Backend.Model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -11,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.Random;
+import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/tips")
@@ -20,9 +23,18 @@ public class TipController {
     @Autowired
     private TipRepository tipRepo;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @PostMapping
     public TipModel addTip(@RequestBody TipModel tip, @AuthenticationPrincipal UserDetails userDetails) {
         tip.setUserId(userDetails.getUsername());
+        // Fetch user name from the database
+        String userName = userRepository.findById(userDetails.getUsername())
+            .map(User::getName)
+            .orElse(userDetails.getUsername());
+        tip.setUserDisplayName(userName);
+        tip.setCreatedAt(LocalDateTime.now());
         return tipRepo.save(tip);
     }
 
@@ -54,7 +66,10 @@ public class TipController {
     @GetMapping("/tip-of-the-day")
     public TipModel getTipOfTheDay() {
         List<TipModel> tips = tipRepo.findAll();
-        return tips.isEmpty() ? null : tips.get(new Random().nextInt(tips.size()));
+        // Show tip with highest rating count (most rated)
+        return tips.stream()
+            .max((a, b) -> Integer.compare(a.getRatingCount(), b.getRatingCount()))
+            .orElse(null);
     }
 
     @PutMapping("/{id}")
