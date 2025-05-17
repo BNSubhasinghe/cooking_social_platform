@@ -9,6 +9,7 @@ public class ChallengeRequest {
     private String startDate;
     private String endDate;
     private MultipartFile file;
+    private String userId;
 
     // Getters and Setters
     public String getTitle() { return title; }
@@ -28,4 +29,7 @@ public class ChallengeRequest {
 
     public MultipartFile getFile() { return file; }
     public void setFile(MultipartFile file) { this.file = file; }
+
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
 }

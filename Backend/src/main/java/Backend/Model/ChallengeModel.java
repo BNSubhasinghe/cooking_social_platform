@@ -5,6 +5,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.Date;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Document("challenges")
 public class ChallengeModel {
@@ -17,7 +19,9 @@ public class ChallengeModel {
     private Date startDate;
     private Date endDate;
     private List<Submission> submissions = new ArrayList<>();
-    
+    private String userId; // userId should be the MongoDB _id string
+    private Set<String> votedUserIds = new HashSet<>();
+
     // Getters and Setters
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -35,15 +39,31 @@ public class ChallengeModel {
     public void setEndDate(Date endDate) { this.endDate = endDate; }
     public List<Submission> getSubmissions() { return submissions; }
     public void setSubmissions(List<Submission> submissions) { this.submissions = submissions; }
+    public String getUserId() { return userId; }
+    public void setUserId(String userId) { this.userId = userId; }
+    public Set<String> getVotedUserIds() { return votedUserIds; }
+    public void setVotedUserIds(Set<String> votedUserIds) { this.votedUserIds = votedUserIds; }
 
     public static class Submission {
         private String recipeId;
         private int votes;
-        
+        private Set<String> votedUserIds = new HashSet<>();
+
+        // Add a default constructor for MongoDB mapping
+        public Submission() {}
+
+        // Optionally, add a constructor for convenience
+        public Submission(String recipeId, int votes) {
+            this.recipeId = recipeId;
+            this.votes = votes;
+        }
+
         // Getters and Setters
         public String getRecipeId() { return recipeId; }
         public void setRecipeId(String recipeId) { this.recipeId = recipeId; }
         public int getVotes() { return votes; }
         public void setVotes(int votes) { this.votes = votes; }
+        public Set<String> getVotedUserIds() { return votedUserIds; }
+        public void setVotedUserIds(Set<String> votedUserIds) { this.votedUserIds = votedUserIds; }
     }
 }

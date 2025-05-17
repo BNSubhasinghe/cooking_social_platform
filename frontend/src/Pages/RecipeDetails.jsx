@@ -21,12 +21,10 @@ const RecipeDetails = () => {
   const [commentToDelete, setCommentToDelete] = useState(null);
   const [userName, setUserName] = useState('You');
 
-  // Capitalize first letter of each word in display name
   const capitalizeName = (name) => {
     return name.replace(/\b\w/g, char => char.toUpperCase());
   };
 
-  // Load saved status and user name from localStorage
   useEffect(() => {
     const savedStatus = localStorage.getItem(`saved-${id}`);
     if (savedStatus) setIsSaved(savedStatus === 'true');
@@ -35,7 +33,6 @@ const RecipeDetails = () => {
     if (storedName) setUserName(capitalizeName(storedName));
   }, [id]);
 
-  // Fetch recipe data from backend
   useEffect(() => {
     const fetchRecipe = async () => {
       try {
@@ -48,8 +45,8 @@ const RecipeDetails = () => {
               ...comment,
               id: comment.id || Date.now().toString() + Math.random().toString(36).substr(2, 9),
               user: capitalizeName(comment.user),
-              rating: comment.rating || 0, // Ensure rating exists
-              helpful: comment.helpful || 0 // Ensure helpful count exists
+              rating: comment.rating || 0,
+              helpful: comment.helpful || 0
             }))
             .sort((a, b) => new Date(b.time) - new Date(a.time))
         };
@@ -63,6 +60,29 @@ const RecipeDetails = () => {
     };
     fetchRecipe();
   }, [id]);
+
+  const renderIngredients = (text) => {
+    if (!text) return null;
+    
+    // Split by lines and filter out empty lines
+    const lines = text.split('\n').filter(line => line.trim());
+    
+    // Check if the first line starts with a bullet point
+    if (lines.length > 0 && lines[0].trim().startsWith('')) {
+      return lines.map((line, index) => (
+        <li key={index} className="text-gray-700">
+          {line.trim()}
+        </li>
+      ));
+    }
+    
+    // If no bullet points, add them
+    return lines.map((line, index) => (
+      <li key={index} className="text-gray-700">
+        - {line.trim()}
+      </li>
+    ));
+  };
 
   const renderInstructions = (text) => {
     if (!text) return null;
@@ -92,7 +112,86 @@ const RecipeDetails = () => {
   };
 
   const handlePrintRecipe = () => {
-    window.print();
+    if (!recipe) return;
+
+    const printContent = `
+      <div style="font-family: 'Helvetica Neue', Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; color: #333;">
+        <div style="text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid #eee;">
+          <h1 style="font-size: 28px; font-weight: bold; margin-bottom: 10px; color: #222;">${recipe.title}</h1>
+          ${recipe.description ? `<p style="font-size: 16px; color: #555; margin-bottom: 20px; font-style: italic;">${recipe.description}</p>` : ''}
+        </div>
+        
+        ${recipe.mediaUrl ? `
+          <div style="margin: 20px 0; text-align: center;">
+            <img src="http://localhost:8080/recipes/image/${recipe.mediaUrl}" alt="${recipe.title}" 
+              style="max-width: 100%; max-height: 400px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
+              onerror="this.onerror=null;this.src='https://via.placeholder.com/800x500?text=Recipe+Image';" />
+          </div>
+        ` : ''}
+        
+        <div style="display: flex; gap: 30px;">
+          <div style="flex: 1;">
+            <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #444; border-bottom: 1px solid #eee; padding-bottom: 8px;">Ingredients</h2>
+            <ul style="list-style-type: none; padding-left: 0; margin: 0;">
+              ${recipe.ingredients ? recipe.ingredients.split('\n').filter(line => line.trim()).map((line, index) => `
+                <li style="margin-bottom: 8px; padding-left: 0;">
+                   ${line.trim()}
+                </li>
+              `).join('') : '<li>No ingredients listed</li>'}
+            </ul>
+          </div>
+          
+          <div style="flex: 2;">
+            <h2 style="font-size: 20px; font-weight: bold; margin-bottom: 15px; color: #444; border-bottom: 1px solid #eee; padding-bottom: 8px;">Directions</h2>
+            <ol style="list-style-type: none; padding-left: 0; margin: 0;">
+              ${recipe.instructions ? recipe.instructions.split('\n').filter(line => line.trim()).map((line, index) => `
+                <li style="margin-bottom: 15px; padding-left: 0;">
+                  <span style="font-weight: bold;">Step ${index + 1}:</span> ${line.replace(/^Step \d+:/, '').trim()}
+                </li>
+              `).join('') : '<li>No instructions provided</li>'}
+            </ol>
+          </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee; font-size: 12px; color: #777;">
+          Printed from Recipe App on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+        </div>
+      </div>
+    `;
+
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>${recipe.title} - Recipe</title>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            @page {
+              size: auto;
+              margin: 10mm;
+            }
+            body {
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+          </style>
+        </head>
+        <body>
+          ${printContent}
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+                window.close();
+              }, 200);
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   const handleShareRecipe = async () => {
@@ -168,7 +267,7 @@ const RecipeDetails = () => {
         text: editCommentText,
         time: new Date().toISOString(),
         user: userName,
-        rating: userRating // Include rating in the update
+        rating: userRating
       };
 
       await updateComment(id, commentId, updatedComment);
@@ -261,8 +360,7 @@ const RecipeDetails = () => {
   if (!recipe) return null;
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8 font-sans print-container">
-      {/* Delete Confirmation Modal */}
+    <div className="max-w-4xl mx-auto px-4 py-8 font-sans">
       {showDeleteConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
@@ -286,7 +384,6 @@ const RecipeDetails = () => {
         </div>
       )}
 
-      {/* Recipe Header */}
       <div className="mb-6">
         <button
           onClick={() => navigate(-1)}
@@ -300,7 +397,6 @@ const RecipeDetails = () => {
 
         <h1 className="text-3xl font-bold text-gray-900 mb-2">{recipe.title}</h1>
         
-        {/* Rating */}
         <div className="flex items-center mb-4">
           <div className="flex mr-2">
             {[1, 2, 3, 4, 5].map((star) => (
@@ -324,7 +420,6 @@ const RecipeDetails = () => {
           <p className="text-gray-600 mb-4 text-base">{recipe.description}</p>
         )}
         
-        {/* Action Buttons */}
         <div className="flex flex-wrap gap-4 mb-6">
           <button 
             onClick={handleSaveRecipe}
@@ -365,7 +460,6 @@ const RecipeDetails = () => {
         </div>
       </div>
 
-      {/* Recipe Image */}
       {recipe.mediaUrl && (
         <div className="mb-8">
           <img
@@ -380,34 +474,26 @@ const RecipeDetails = () => {
         </div>
       )}
 
-      {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Ingredients */}
         <div className="lg:col-span-1">
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h2 className="text-2xl font-bold text-gray-800 mb-4 pb-2 border-b border-gray-200">Ingredients</h2>
-            <ul className="space-y-3">
-              {recipe.ingredients && recipe.ingredients.split('\n').filter(line => line.trim()).map((item, index) => (
-                <li key={index} className="text-gray-700">
-                  {item}
-                </li>
-              ))}
+            <ul className="space-y-2">
+              {renderIngredients(recipe.ingredients) || <li className="text-gray-500">No ingredients listed</li>}
             </ul>
           </div>
         </div>
 
-        {/* Instructions */}
         <div className="lg:col-span-2">
           <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
             <h2 className="text-2xl font-bold text-gray-800 mb-4 pb-2 border-b border-gray-200">Directions</h2>
             <ol className="space-y-4">
-              {renderInstructions(recipe.instructions)}
+              {renderInstructions(recipe.instructions) || <li className="text-gray-500">No instructions provided</li>}
             </ol>
           </div>
         </div>
       </div>
 
-      {/* Rating Section */}
       <div id="rating-section" className="mt-12 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
         <h2 className="text-2xl font-bold text-gray-800 mb-4">Rate this recipe</h2>
         <div className="flex items-center mb-2">
@@ -434,7 +520,6 @@ const RecipeDetails = () => {
         <p className="text-sm text-gray-500">Your rating helps others discover great recipes!</p>
       </div>
 
-      {/* Community Reviews Section */}
       <div className="mt-12 bg-white p-6 rounded-lg shadow-sm border border-gray-200">
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-bold text-gray-800">Community Reviews</h2>

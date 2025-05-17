@@ -10,9 +10,21 @@ const api = axios.create({
   },
 });
 
+// Attach JWT token to every request if present
+api.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers["Authorization"] = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 export const getAllChallenges = () => api.get("/");
 export const getActiveChallenges = () => api.get("/active");
+export const getAllActiveChallenges = () => api.get("/active/all");
 export const getPastChallenges = () => api.get("/past");
 export const getChallengeById = (id) => api.get(`/${id}`);
 export const getChallengeLeaderboard = (id) => api.get(`/${id}/leaderboard`);
@@ -31,6 +43,7 @@ export const updateChallenge = (id, formData) => {
 
 export const deleteChallenge = (id) => api.delete(`/${id}`);
 
+// If needed, you can still pass recipeId as a param
 export const submitToChallenge = (id, recipeId) => 
   api.post(`/${id}/submit`, null, { params: { recipeId } });
 

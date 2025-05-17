@@ -26,7 +26,6 @@ public class RecipeController {
 
     private final String UPLOAD_DIR = "src/main/uploads/";
 
-    // ✅ Add new recipe (pure JSON)
     @PostMapping("/recipes")
     public ResponseEntity<?> addRecipe(@RequestBody RecipeModel recipe) {
         try {
@@ -37,7 +36,6 @@ public class RecipeController {
         }
     }
 
-    // ✅ Upload image only
     @PostMapping("/recipes/image")
     public String uploadImage(@RequestParam("file") MultipartFile file) {
         String fileName = file.getOriginalFilename();
@@ -51,26 +49,22 @@ public class RecipeController {
         }
     }
 
-    // ✅ Get all recipes
     @GetMapping("/recipes")
     public List<RecipeModel> getAllRecipes() {
         return recipeRepository.findAll();
     }
 
-    // ✅ Get recipe by ID with comments
     @GetMapping("/recipes/{id}")
     public RecipeModel getRecipeById(@PathVariable String id) {
         return recipeRepository.findById(id)
                 .orElseThrow(() -> new RecipeNotFoundException(id));
     }
 
-    // ✅ Filter recipes by category
     @GetMapping("/recipes/category/{category}")
     public List<RecipeModel> getByCategory(@PathVariable String category) {
         return recipeRepository.findByCategoryContainingIgnoreCase(category);
     }
 
-    // ✅ Serve uploaded image
     @GetMapping("/recipes/image/{filename}")
     public ResponseEntity<FileSystemResource> getImage(@PathVariable String filename) {
         File file = new File(UPLOAD_DIR + filename);
@@ -80,7 +74,6 @@ public class RecipeController {
         return ResponseEntity.ok(new FileSystemResource(file));
     }
 
-    // ✅ Update recipe with optional image
     @PutMapping("/recipes/update/{id}")
     public RecipeModel updateRecipe(
             @RequestPart("recipeDetails") String recipeDetails,
@@ -119,7 +112,6 @@ public class RecipeController {
         return recipeRepository.save(existing);
     }
 
-    // ✅ Delete recipe and image
     @DeleteMapping("/recipes/{id}")
     public String deleteRecipe(@PathVariable String id) {
         RecipeModel recipe = recipeRepository.findById(id)
@@ -137,7 +129,6 @@ public class RecipeController {
         return "Recipe with ID " + id + " and image deleted.";
     }
 
-    // ⭐ Rate recipe
     @PutMapping("/recipes/{id}/rate")
     public RecipeModel rateRecipe(@PathVariable String id, @RequestParam double rating) {
         RecipeModel recipe = recipeRepository.findById(id)
@@ -152,17 +143,25 @@ public class RecipeController {
         return recipeRepository.save(recipe);
     }
 
-    // 💬 Add new comment
     @PostMapping("/recipes/{id}/comment")
     public RecipeModel addComment(@PathVariable String id, @RequestBody CommentModel comment) {
         RecipeModel recipe = recipeRepository.findById(id)
                 .orElseThrow(() -> new RecipeNotFoundException(id));
 
-        recipe.getComments().add(0, comment); // add to beginning
+        // Ensure rating is included and properly set
+        if (comment.getRating() == null) {
+            comment.setRating(0.0);
+        }
+
+        // Set default helpful count if not provided
+        if (comment.getHelpful() == null) {
+            comment.setHelpful(0);
+        }
+
+        recipe.getComments().add(0, comment);
         return recipeRepository.save(recipe);
     }
 
-    // 💬 Update a comment
     @PutMapping("/recipes/{recipeId}/comment/{commentId}")
     public RecipeModel updateComment(
             @PathVariable String recipeId,
@@ -180,12 +179,15 @@ public class RecipeController {
                     c.setTime(updatedComment.getTime());
                     c.setAvatar(updatedComment.getAvatar());
                     c.setUser(updatedComment.getUser());
+                    // Ensure rating is updated
+                    c.setRating(updatedComment.getRating() != null ? updatedComment.getRating() : c.getRating());
+                    // Ensure helpful count is updated
+                    c.setHelpful(updatedComment.getHelpful() != null ? updatedComment.getHelpful() : c.getHelpful());
                 });
 
         return recipeRepository.save(recipe);
     }
 
-    // 💬 Delete a comment
     @DeleteMapping("/recipes/{recipeId}/comment/{commentId}")
     public ResponseEntity<?> deleteComment(
             @PathVariable String recipeId,

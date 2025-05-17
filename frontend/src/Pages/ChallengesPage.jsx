@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useContext } from 'react';
 import { 
   getAllChallenges, 
   getActiveChallenges, 
@@ -8,12 +8,13 @@ import {
   deleteChallenge,
   submitToChallenge,
   voteForSubmission,
-  getChallengeLeaderboard
+  getChallengeLeaderboard,
+  getAllActiveChallenges // <-- add import
 } from '../api/challengeApi';
 import { getAllRecipes } from '../api/recipeApi';
+import { AuthContext } from '../context/AuthContext';
 
 const ChallengesPage = () => {
-  const [challenges, setChallenges] = useState([]);
   const [activeChallenges, setActiveChallenges] = useState([]);
   const [pastChallenges, setPastChallenges] = useState([]);
   const [selectedChallenge, setSelectedChallenge] = useState(null);
@@ -36,21 +37,29 @@ const ChallengesPage = () => {
   const [toast, setToast] = useState(null);
   const [showTopButton, setShowTopButton] = useState(false);
   const [showChallengeWall, setShowChallengeWall] = useState(false); 
+  const [allActiveChallenges, setAllActiveChallenges] = useState([]);
+  const { user } = useContext(AuthContext);
 
   const filteredChallenges = activeChallenges.filter((challenge) =>
     challenge.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   useEffect(() => {
-    fetchChallenges();
-    fetchRecipes();
-    
+    if (!user?.id) return;
+    fetchChallenges(user.id);
+    fetchRecipes(); // This is correct: fetches all recipes, not filtered by user
     const handleScroll = () => {
       setShowTopButton(window.scrollY > 300);
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [user]);
+
+  useEffect(() => {
+    if (showChallengeWall) {
+      fetchAllActiveChallenges();
+    }
+  }, [showChallengeWall]);
 
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -61,14 +70,12 @@ const ChallengesPage = () => {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const fetchChallenges = async () => {
+  const fetchChallenges = async (userId) => {
     try {
-      const [allRes, activeRes, pastRes] = await Promise.all([
-        getAllChallenges(),
-        getActiveChallenges(),
-        getPastChallenges()
+      const [activeRes, pastRes] = await Promise.all([
+        getActiveChallenges(userId),
+        getPastChallenges(userId)
       ]);
-      setChallenges(allRes.data);
       setActiveChallenges(activeRes.data);
       setPastChallenges(pastRes.data);
     } catch (error) {
@@ -80,7 +87,8 @@ const ChallengesPage = () => {
   const fetchRecipes = async () => {
     try {
       const res = await getAllRecipes();
-      setRecipes(res.data);
+      // Ensure each recipe has an 'id' field for matching with submission.recipeId
+      setRecipes(res.data.map(r => ({ ...r, id: r._id || r.id })));
     } catch (error) {
       console.error('Error fetching recipes:', error);
       showToast('Error fetching recipes');
@@ -89,11 +97,21 @@ const ChallengesPage = () => {
 
   const fetchLeaderboard = async (id) => {
     try {
-      const res = await getChallengeLeaderboard(id);
+      const res = await getChallengeLeaderboard(id, user.id);
       setLeaderboard(res.data);
     } catch (error) {
       console.error('Error fetching leaderboard:', error);
       showToast('Error fetching leaderboard');
+    }
+  };
+
+  const fetchAllActiveChallenges = async () => {
+    try {
+      const res = await getAllActiveChallenges();
+      setAllActiveChallenges(res.data);
+    } catch (error) {
+      console.error('Error fetching all active challenges:', error);
+      showToast('Error fetching all active challenges');
     }
   };
 
@@ -113,9 +131,11 @@ const ChallengesPage = () => {
       data.append('title', formData.title);
       data.append('description', formData.description);
       data.append('theme', formData.theme);
-      data.append('startDate', formData.startDate);
-      data.append('endDate', formData.endDate);
+      // Only append if not empty
+      if (formData.startDate) data.append('startDate', formData.startDate);
+      if (formData.endDate) data.append('endDate', formData.endDate);
       if (formData.file) data.append('file', formData.file);
+      data.append('userId', user.id);
 
       if (editingChallenge) {
         await updateChallenge(editingChallenge.id, data);
@@ -134,7 +154,7 @@ const ChallengesPage = () => {
         file: null
       });
       setEditingChallenge(null);
-      fetchChallenges();
+      fetchChallenges(user.id);
     } catch (error) {
       console.error('Error saving challenge:', error);
       showToast('Error saving challenge');
@@ -142,13 +162,19 @@ const ChallengesPage = () => {
   };
 
   const handleEdit = (challenge) => {
+    // Defensive: handle missing/invalid dates
+    const safeDate = (date) => {
+      if (!date) return '';
+      const d = new Date(date);
+      return isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 16);
+    };
     setEditingChallenge(challenge);
     setFormData({
       title: challenge.title,
       description: challenge.description,
       theme: challenge.theme,
-      startDate: new Date(challenge.startDate).toISOString().slice(0, 16),
-      endDate: new Date(challenge.endDate).toISOString().slice(0, 16),
+      startDate: safeDate(challenge.startDate),
+      endDate: safeDate(challenge.endDate),
       file: null
     });
     setShowForm(true);
@@ -156,9 +182,9 @@ const ChallengesPage = () => {
 
   const handleDelete = async (id) => {
     try {
-      await deleteChallenge(id);
+      await deleteChallenge(id, user.id);
       showToast('Challenge deleted successfully');
-      fetchChallenges();
+      fetchChallenges(user.id);
     } catch (error) {
       console.error('Error deleting challenge:', error);
       showToast('Error deleting challenge');
@@ -173,9 +199,9 @@ const ChallengesPage = () => {
   const handleSubmitRecipe = async (e) => {
     e.preventDefault();
     try {
-      await submitToChallenge(selectedChallenge.id, submissionData.recipeId);
+      await submitToChallenge(selectedChallenge.id, submissionData.recipeId, user.id);
       showToast('Recipe submitted successfully');
-      fetchChallenges();
+      fetchChallenges(user.id);
       fetchLeaderboard(selectedChallenge.id);
       setSubmissionData({ recipeId: '' });
     } catch (error) {
@@ -186,7 +212,7 @@ const ChallengesPage = () => {
 
   const handleVote = async (recipeId) => {
     try {
-      await voteForSubmission(selectedChallenge.id, recipeId);
+      await voteForSubmission(selectedChallenge.id, recipeId, user.id);
       showToast('Vote submitted successfully');
       fetchLeaderboard(selectedChallenge.id);
     } catch (error) {
@@ -230,7 +256,7 @@ const ChallengesPage = () => {
           <button
             onClick={() => {
               setSelectedChallenge(null);
-              fetchChallenges();
+              fetchChallenges(user.id); // <-- Pass user.id here!
               setShowChallengeWall(false); 
             }}
             className="w-full text-left p-3 rounded-lg hover:bg-gray-100 transition"
@@ -391,8 +417,8 @@ const ChallengesPage = () => {
   <div className="max-w-7xl mx-auto mt-12">
     <h2 className="text-3xl font-bold text-center mb-6 text-gray-800">Challenges</h2>
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-      {activeChallenges.length > 0 ? (
-        activeChallenges.map((challenge) => (
+      {allActiveChallenges.length > 0 ? (
+        allActiveChallenges.map((challenge) => (
           <div
             key={challenge.id}
             className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 hover:-translate-y-1 cursor-pointer"
@@ -659,69 +685,75 @@ const ChallengesPage = () => {
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {/* Submit Recipe Section */}
-                    {activeChallenges.some(ch => ch.id === selectedChallenge.id) && (
-                      <div>
-                        <h3 className="text-lg font-semibold mb-3">Submit Your Recipe</h3>
-                        <form onSubmit={handleSubmitRecipe} className="space-y-3">
-                          <div>
-                            <select
-                              name="recipeId"
-                              value={submissionData.recipeId}
-                              onChange={(e) => setSubmissionData({ recipeId: e.target.value })}
-                              className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
-                              required
-                            >
-                              <option value="">Select a recipe</option>
-                              {recipes.map(recipe => (
-                                <option key={recipe.id} value={recipe.id}>{recipe.title}</option>
-                              ))}
-                            </select>
-                          </div>
-                          <button
-                            type="submit"
-                            className="w-full p-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition"
-                          >
-                            Submit Recipe
-                          </button>
-                        </form>
-                      </div>
-                    )}
+  {/* Submit Recipe Section */}
+  {new Date(selectedChallenge.endDate) > new Date() && (
+    <div>
+      <h3 className="text-lg font-semibold mb-3">Submit Your Recipe</h3>
+      <form onSubmit={handleSubmitRecipe} className="space-y-3">
+        <div>
+          <select
+            name="recipeId"
+            value={submissionData.recipeId}
+            onChange={(e) => setSubmissionData({ recipeId: e.target.value })}
+            className="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-black"
+            required
+          >
+            <option value="">Select a recipe</option>
+            {recipes.map(recipe => (
+              <option key={recipe.id} value={recipe.id}>{recipe.title}</option>
+            ))}
+          </select>
+        </div>
+        <button
+          type="submit"
+          className="w-full p-3 bg-black text-white rounded-lg font-medium hover:bg-gray-800 transition"
+        >
+          Submit Recipe
+        </button>
+      </form>
+    </div>
+  )}
 
-                    {/* Leaderboard Section */}
-                    <div>
-                      <h3 className="text-lg font-semibold mb-3">Leaderboard</h3>
-                      {leaderboard.length > 0 ? (
-                        <div className="space-y-3">
-                          {leaderboard
-                            .sort((a, b) => b.votes - a.votes) 
-                            .map((submission, index) => {
-                              const recipe = recipes.find(r => r.id === submission.recipeId);
-                              return recipe ? (
-                                <div key={submission.recipeId} className="border rounded-lg p-3 flex justify-between items-center">
-                                  <div>
-                                    <h4 className="font-medium">
-                                      #{index + 1} {recipe.title}
-                                    </h4>
-                                    <p className="text-sm text-gray-500">{submission.votes} votes</p>
-                                  </div>
-                                  {activeChallenges.some(ch => ch.id === selectedChallenge.id) && (
-                                    <button
-                                      onClick={() => handleVote(submission.recipeId)}
-                                      className="px-4 py-2 bg-black text-white rounded-lg text-sm hover:bg-gray-800 transition"
-                                    >
-                                      Vote
-                                    </button>
-                                  )}
-                                </div>
-                              ) : null;
-                            })}
-                        </div>
-                      ) : (
-                        <p className="text-gray-500">No submissions yet. Be the first to submit!</p>
-                      )}
-                    </div>
-                  </div>
+  {/* Leaderboard Section */}
+  <div>
+    <h3 className="text-lg font-semibold mb-3">Leaderboard</h3>
+    {leaderboard.length > 0 ? (
+      <div className="space-y-3">
+        {leaderboard
+          .sort((a, b) => b.votes - a.votes) 
+          .map((submission, index) => {
+            const recipe = recipes.find(r => r.id === submission.recipeId || r._id === submission.recipeId);
+            const hasVoted = submission.votedUserIds && submission.votedUserIds.includes(user.id);
+            return recipe ? (
+              <div key={submission.recipeId} className="border rounded-lg p-3 flex justify-between items-center">
+                <div>
+                  <h4 className="font-medium">
+                    #{index + 1} {recipe.title}
+                  </h4>
+                  <p className="text-sm text-gray-500">{submission.votes} votes</p>
+                </div>
+                {new Date(selectedChallenge.endDate) > new Date() && (
+                  <button
+                    onClick={() => handleVote(submission.recipeId)}
+                    disabled={hasVoted}
+                    style={{
+                      backgroundColor: hasVoted ? 'green' : 'black',
+                      color: 'white'
+                    }}
+                    className="px-4 py-2 rounded-lg text-sm hover:bg-gray-800 transition"
+                  >
+                    {hasVoted ? 'Voted' : 'Vote'}
+                  </button>
+                )}
+              </div>
+            ) : null;
+          })}
+      </div>
+    ) : (
+      <p className="text-gray-500">No submissions yet. Be the first to submit!</p>
+    )}
+  </div>
+</div>
                 </div>
               </div>
             </div>

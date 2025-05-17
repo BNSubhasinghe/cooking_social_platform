@@ -11,6 +11,8 @@ export const Header = () => {
           <Link to="/" className="hover:underline">Home</Link>
           <Link to="/challenge-landing" className="hover:underline">Challenges</Link>
           <Link to="/landing-page" className="hover:underline">Recipes</Link>
+          <Link to="/cookingTips" className="hover:underline">CookingTips</Link>
+          <Link to="/profile/complete" className="hover:underline">Nutrition Tracker</Link>
         </nav>
       </div>
     </header>

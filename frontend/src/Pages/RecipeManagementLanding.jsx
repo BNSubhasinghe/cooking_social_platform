@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FaStar, FaShare, FaEdit, FaRegComment } from 'react-icons/fa';
+import { FaStar, FaShare, FaEdit, FaRegComment, FaClock, FaUtensils } from 'react-icons/fa';
 import { GiCookingPot, GiChefToque } from 'react-icons/gi';
 
-const RecipeManagementLanding = () => {
+const RecipeManagementLanding = ({ topRatedRecipes = [] }) => {
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -58,9 +58,52 @@ const RecipeManagementLanding = () => {
     }
   ];
 
+  // Famous recipes dummy data
+  const famousRecipes = [
+    {
+      id: 101,
+      title: "Beef Wellington",
+      description: "Gordon Ramsay's signature dish - tender beef fillet wrapped in mushroom duxelles and puff pastry.",
+      mediaUrl: "https://images.unsplash.com/photo-1600891964599-f61ba0e24092?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+      averageRating: 4.9,
+      ratingCount: 128,
+      prepTime: "40 mins",
+      cookTime: "45 mins",
+      difficulty: "Advanced",
+      chef: "Gordon Ramsay"
+    },
+    {
+      id: 102,
+      title: "Spaghetti Carbonara",
+      description: "Classic Roman pasta dish with creamy egg sauce, pancetta, and pecorino cheese.",
+      mediaUrl: "https://images.unsplash.com/photo-1588013273468-315fd88ea34c?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+      averageRating: 4.8,
+      ratingCount: 245,
+      prepTime: "15 mins",
+      cookTime: "15 mins",
+      difficulty: "Intermediate",
+      chef: "Massimo Bottura"
+    },
+    {
+      id: 103,
+      title: "Chocolate Soufflé",
+      description: "Michelin-starred dessert - light, airy chocolate soufflé with a molten center.",
+      mediaUrl: "https://images.unsplash.com/photo-1564355808539-22fda35bed7e?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
+      averageRating: 4.7,
+      ratingCount: 187,
+      prepTime: "30 mins",
+      cookTime: "18 mins",
+      difficulty: "Expert",
+      chef: "Dominique Ansel"
+    }
+  ];
+
+  // Use provided recipes or famous recipes data
+  const displayedRecipes = topRatedRecipes.length > 0 ? topRatedRecipes : famousRecipes;
+
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
-      {/* Hero Section */}
+      {/* Hero Section - unchanged */}
       <section className="relative">
         <div className="absolute inset-0 bg-black opacity-70"></div>
         <div className="relative h-screen overflow-hidden">
@@ -111,7 +154,7 @@ const RecipeManagementLanding = () => {
         </div>
       </section>
 
-      {/* Why Share Section */}
+      {/* Why Share Section - unchanged */}
       <section className="py-20 px-4 bg-gray-900">
         <div className="container mx-auto">
           <motion.div
@@ -153,7 +196,82 @@ const RecipeManagementLanding = () => {
         </div>
       </section>
 
-      {/* Recipe Showcase Section */}
+      {/* Updated Top Rated Recipes Section */}
+      <section className="py-16 px-4 bg-gray-800">
+        <div className="container mx-auto">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={containerVariants}
+          >
+            <motion.h2 
+              variants={itemVariants}
+              className="text-3xl md:text-4xl font-bold mb-10 text-center text-white"
+            >
+              Chef's Signature Recipes
+            </motion.h2>
+            <div className="grid md:grid-cols-3 gap-8">
+              {displayedRecipes.map((recipe) => (
+                <motion.div 
+                  key={recipe.id}
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.03 }}
+                  className="bg-gray-700 rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300"
+                >
+                  <Link to={`/recipe/${recipe.id}`} className="block h-full">
+                    <div className="relative h-64">
+                      <img
+                        src={recipe.mediaUrl}
+                        alt={recipe.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.onerror = null;
+                          e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
+                        }}
+                      />
+                      <div className="absolute bottom-3 left-3 flex items-center bg-black bg-opacity-70 px-2 py-1 rounded-full">
+                        <FaStar className="text-yellow-400 mr-1" />
+                        <span className="text-white text-sm font-medium">
+                          {recipe.averageRating.toFixed(1)} ({recipe.ratingCount})
+                        </span>
+                      </div>
+                     
+                    </div>
+                    <div className="p-5">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="text-xl font-bold text-white">{recipe.title}</h3>
+                        
+                      </div>
+                      <p className="text-gray-300 line-clamp-2 mb-4">
+                        {recipe.description}
+                      </p>
+                      <div className="flex justify-between text-sm text-gray-400">
+                       
+                        
+                      </div>
+                    </div>
+                  </Link>
+                </motion.div>
+              ))}
+            </div>
+            <motion.div 
+              variants={itemVariants}
+              className="text-center mt-12"
+            >
+              <Link 
+                to="/" 
+                className="inline-flex items-center px-6 py-3 bg-amber-500 hover:bg-amber-600 text-gray-900 font-bold rounded-lg transition-all"
+              >
+                <FaUtensils className="mr-2" />
+                Explore More Recipes
+              </Link>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Recipe Showcase Section - unchanged */}
       <section className="py-20 px-4 bg-gray-800">
         <div className="container mx-auto">
           <motion.div
@@ -204,25 +322,9 @@ const RecipeManagementLanding = () => {
                     </p>
                   </div>
                 </motion.div>
-                <motion.div 
-                  variants={itemVariants}
-                  whileHover={{ scale: 1.02 }}
-                  className="flex items-start bg-gray-900 p-6 rounded-xl shadow-md hover:shadow-lg transition-all"
-                >
-                  <div className="flex-shrink-0 bg-amber-500 text-gray-900 p-3 rounded-lg mr-4">
-                    <GiCookingPot className="text-2xl" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-lg mb-2 text-white">Mobile Friendly</h4>
-                    <p className="text-gray-200">
-                      Access your recipes from any device, anywhere - perfect for cooking on the go
-                    </p>
-                  </div>
-                </motion.div>
               </div>
             </motion.div>
 
-            {/* ✅ Clean Video Section - No Text */}
             <motion.div 
               variants={itemVariants}
               className="lg:w-1/2 mt-10 lg:mt-0"
@@ -247,7 +349,7 @@ const RecipeManagementLanding = () => {
         </div>
       </section>
 
-      {/* Final CTA - with static image background */}
+      {/* Final CTA - unchanged */}
       <section
         className="relative py-24 px-4 text-center bg-cover bg-center"
         style={{ backgroundImage: "url('/images/cta-bg.jpg')" }}
@@ -276,14 +378,8 @@ const RecipeManagementLanding = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.4 }}
-            className="flex flex-col sm:flex-row justify-center gap-4"
+            className="flex justify-center"
           >
-            <Link 
-              to="/signup" 
-              className="px-8 py-4 bg-yellow-400 hover:bg-yellow-500 text-black font-bold rounded-lg shadow-lg transition-all transform hover:scale-105"
-            >
-              Start Sharing Now
-            </Link>
             <Link 
               to="/recipe-table" 
               className="px-8 py-4 bg-transparent border-2 border-white text-white hover:bg-white hover:text-black font-bold rounded-lg transition-all"

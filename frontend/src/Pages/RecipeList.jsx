@@ -18,13 +18,25 @@ const RecipeList = () => {
 
   const navigate = useNavigate();
 
-  // Fetch recipes from backend
+  // Enhanced sorting function for case-insensitive alphabetical order
+  const sortRecipesAlphabetically = (recipeList) => {
+    return [...recipeList].sort((a, b) => 
+      a.title.localeCompare(b.title, 'en', { 
+        sensitivity: 'base',
+        ignorePunctuation: true,
+        numeric: true 
+      })
+    );
+  };
+
+  // Fetch recipes from backend and sort alphabetically
   useEffect(() => {
     const fetchRecipes = async () => {
       try {
         const response = await getAllRecipes();
-        setRecipes(response.data);
-        setFiltered(response.data);
+        const sortedRecipes = sortRecipesAlphabetically(response.data);
+        setRecipes(sortedRecipes);
+        setFiltered(sortedRecipes);
       } catch (error) {
         console.error("Error fetching recipes:", error);
       }
@@ -39,7 +51,8 @@ const RecipeList = () => {
 
   // Filter recipes based on search and filters
   useEffect(() => {
-    let filteredList = recipes;
+    let filteredList = [...recipes];
+    
     if (search.trim() !== '') {
       filteredList = filteredList.filter((r) =>
         r.title.toLowerCase().includes(search.toLowerCase())
@@ -54,7 +67,10 @@ const RecipeList = () => {
     if (showFavoritesOnly) {
       filteredList = filteredList.filter((r) => favorites.includes(r.id));
     }
-    setFiltered(filteredList);
+    
+    // Sort the filtered list alphabetically
+    const sortedFilteredList = sortRecipesAlphabetically(filteredList);
+    setFiltered(sortedFilteredList);
   }, [search, filterCategory, filterCuisine, showFavoritesOnly, recipes, favorites]);
 
   // Show scroll-to-top button
@@ -131,7 +147,7 @@ const RecipeList = () => {
         </button>
       </div>
 
-      {/* Recipe Cards */}
+      {/* Recipe Cards - Now properly sorted A-Z */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {filtered.length > 0 ? (
           filtered.map((recipe) => (
