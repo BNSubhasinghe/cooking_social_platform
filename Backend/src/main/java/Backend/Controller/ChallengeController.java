@@ -246,6 +246,35 @@ public class ChallengeController {
         return ResponseEntity.ok(challenge);
     }
 
+    @PostMapping("/{id}/unvote/{recipeId}")
+    public ResponseEntity<?> unvoteForSubmission(
+            @PathVariable String id,
+            @PathVariable String recipeId,
+            @AuthenticationPrincipal UserDetails userDetails) {
+
+        ChallengeModel challenge = challengeRepository.findById(id).orElse(null);
+        if (challenge == null) return ResponseEntity.badRequest().body("Challenge not found");
+        if (userDetails == null) return ResponseEntity.status(401).body("Unauthorized");
+
+        String userId = userDetails.getUsername();
+        boolean found = false;
+        for (ChallengeModel.Submission submission : challenge.getSubmissions()) {
+            if (submission.getRecipeId().equals(recipeId)) {
+                if (!submission.getVotedUserIds().contains(userId)) {
+                    return ResponseEntity.badRequest().body("You have not voted for this recipe.");
+                }
+                submission.setVotes(Math.max(0, submission.getVotes() - 1));
+                submission.getVotedUserIds().remove(userId);
+                found = true;
+                break;
+            }
+        }
+        if (!found) return ResponseEntity.badRequest().body("Submission not found.");
+
+        challengeRepository.save(challenge);
+        return ResponseEntity.ok(challenge);
+    }
+
     @GetMapping("/{id}/leaderboard")
     public List<ChallengeModel.Submission> getLeaderboard(@PathVariable String id, @AuthenticationPrincipal UserDetails userDetails) {
         ChallengeModel challenge = challengeRepository.findById(id).orElse(null);
