@@ -240,7 +240,7 @@ const TipsLanding = () => {
             >
               <h2 className="text-3xl md:text-4xl font-bold mb-6">Share Your Culinary Knowledge</h2>
               <p className="text-xl mb-8 text-gray-200">
-                Have a cooking trick that saves time? A special technique that elevates your dishes? Share it with our community and help others improve their cooking skills.
+                Have a cooking trick that saves time? A special technique that elevates your dishes? Share it with our community and help others improve their cooking skills
               </p>
               <Link 
                 to="/addtip" 
