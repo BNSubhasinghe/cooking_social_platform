@@ -46,8 +46,15 @@ import WaterLog from "./Pages/Nutrition/WaterLog.jsx";
 import DailyProgress from "./Pages/Progress/DailyProgress.jsx";
 import NutritionTrackerLanding from "./Pages/NutritionTrackerLandingPage";
 
+import TipsLanding from "./Pages/TipsLanding.jsx";
+
 // API utils
 import api from "./utils/api";
+
+
+import Home from "./Pages/Home.jsx";
+import About from "./Pages/About.jsx";
+
 
 // Callback for OAuth
 const AuthCallback = () => {
@@ -108,11 +115,17 @@ function App() {
             <Route path="/cookingTips" element={<CookingTips />} />
             <Route path="/addtip" element={<AddTip />} />
 
+            <Route path="/tips-landing" element={<TipsLanding />} />
+
             {/* ---------- AUTH & WELLNESS MODULES ---------- */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/oauth-success" element={<AuthCallback />} />
             <Route path="/nutrition" element={<NutritionTrackerLanding />} />
+
+
+            <Route path="/home" element={<Home />} />
+            <Route path="/about" element={<About/>} />
 
             <Route
               path="/profile/complete"
